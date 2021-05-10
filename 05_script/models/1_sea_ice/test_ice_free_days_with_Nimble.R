@@ -71,11 +71,7 @@ J <- length(levels(y)) # number of categories
 # ~ 1. Model without random effect ---------------------------------------------
 
 # Put all the data in a list
-# dat <- list(y, N, J, year, nbyear, ice_free_days_previous_s)
-# names(dat) <- c("y", "N", "J","year", "nbyear", "ice_free_days_previous_s")
-# dat <- list(y, N, J, ice_free_days_previous_s)
 dat <- list(as.numeric(y), as.numeric(ice_free_days_previous_s))
-
 names(dat) <- c("y", "ice_free_days_previous_s")
 
 # Define the parameters to estimate
@@ -91,19 +87,11 @@ mlogit.mod <- mlogit(yfac ~ 1| var_scaled,
                      reflevel = "0")
 
 coefs <- as.vector(summary(mlogit.mod)$coefficients)
-# inits1 <- list(a0 = coefs[1], b0 = coefs[2], c0 = coefs[3],
-#                a1 = coefs[4],
-#                sigma1 = runif(1))
-# inits2 <- list(a0 = coefs[1] + 0.1, b0 = coefs[2] - 0.1, c0 = coefs[3] + 0.1,
-#                a1 = coefs[4] -0.1,
-#                sigma1 = runif(1))
 
-
-inits <- function() list(inits1 = list(a0 = coefs[1], b0 = coefs[2], c0 = coefs[3],
-                                       a1 = coefs[4]),
-                         inits2 = list(a0 = coefs[1] + 0.1, b0 = coefs[2] - 0.1, c0 = coefs[3] + 0.1,
-                                       a1 = coefs[4] -0.1))
-
+inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
+                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
+                         c0 = coefs[3] + round(runif(n = 1, -1, 1))/10, 
+                         a1 = coefs[4] + round(runif(n = 1, -1, 1))/10)
 
 # Define constants
 my.constants <- list(N = length(y), # nb of females captured
@@ -140,20 +128,7 @@ Nimble_ie_free_days_common <- nimbleCode({
   c0 ~ dnorm(0.00000E+00, 0.1)
 })
 
-writeLines(
-  'PATH="${RTOOLS40_HOME}\\usr\\bin;${PATH}"',
-  con = file("~/.Renviron", open = "a")
-)
-
-hmm.phiflowREp <- nimbleCode({
-  for (t in 1:(T-1)){
-    logit(phi[t]) <- beta[1] + beta[2] * flow[t] + eps[t] 
-    eps[t] ~ dnorm(0, sd = sdeps) 
-    ...  
-  }
-  sdeps ~ dunif(0,10) 
-  ...
-})  
+  
   
 
 # ~~~ b. Run the model ---------------------------------------------------------
@@ -167,7 +142,8 @@ mcmc.output <- nimbleMCMC(code = Nimble_ie_free_days_common,     # model code
                           nburnin = 5000,              # length of the burn-in
                           nchains = 2)
 
-  
+initial.values <- function() list(phi = runif(1,0,1),
+                                  p = runif(1,0,1))  
 
 # 
 processed_output <- ggs(as.mcmc(mcmc.output)) %>%
@@ -219,10 +195,10 @@ mlogit.mod <- mlogit(yfac ~ 1| var_scaled,
 
 coefs <- as.vector(summary(mlogit.mod)$coefficients)
 
-inits <- function() list(inits1 = list(a0 = coefs[1], b0 = coefs[2], c0 = coefs[3],
-                                       a1 = coefs[4], sdeps = runif(1)),
-                         inits2 = list(a0 = coefs[1] + 0.1, b0 = coefs[2] - 0.1, c0 = coefs[3] + 0.1,
-                                       a1 = coefs[4] -0.1, sdeps = runif(1)))
+inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
+                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
+                         c0 = coefs[3] + round(runif(n = 1, -1, 1))/10, 
+                         a1 = coefs[4] + round(runif(n = 1, -1, 1))/10)
 
 
 # Define constants
@@ -241,9 +217,9 @@ Nimble_ice_free_days_common <- nimbleCode({
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*ice_free_days_previous_s[i] + eps1[year[i]] # eps[year[i]]
-    log(q[i, 3]) <- b0 + a1*ice_free_days_previous_s[i] + eps1[year[i]] # eps[year[i]]
-    log(q[i, 4]) <- c0 + a1*ice_free_days_previous_s[i] + eps1[year[i]] # eps[year[i]]
+    log(q[i, 2]) <- a0 + a1*ice_free_days_previous_s[i] + eps1[year[i]] 
+    log(q[i, 3]) <- b0 + a1*ice_free_days_previous_s[i] + eps1[year[i]] 
+    log(q[i, 4]) <- c0 + a1*ice_free_days_previous_s[i] + eps1[year[i]] 
     
     
     for (j in 1:J) {

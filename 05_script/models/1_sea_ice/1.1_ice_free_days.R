@@ -40,7 +40,7 @@ y <- factor(as.numeric(data_model$cub_number))
 summary(y)
 
 # Renumérotation des années
-year <- data_model$year
+{year <- data_model$year
 year <- factor(year) # laisse tomber les modalites inutiles 
 year2 <- NULL
 for (i in 1:length(year)){
@@ -49,9 +49,10 @@ for (i in 1:length(year)){
 year <- factor(year2)
 nbyear <- length(levels(year))
 year
+}
 
 # on renumerote les individus
-id_fem <- data_model$ID_NR
+{id_fem <- data_model$ID_NR
 id_fem <- factor(id_fem) 
 id_fem2 <- NULL
 for (i in 1:length(id_fem)){
@@ -59,8 +60,8 @@ for (i in 1:length(id_fem)){
 }
 id_fem <- factor(id_fem2)
 nbind <- length(levels(id_fem))
-
 id_fem
+}
 
 N <- length(y) # nb of reproductive events
 J <- length(levels(y)) # number of categories
@@ -495,94 +496,3 @@ rm(model_code, slope, mode,
    dat, params, nb.beta, inits, var, var_scaled, 
    var_short_name, var_full_name,  nb.beta)
 
-
-
-# 5. Nimble test ---------------------
-
-library(nimble)
-Nimble_ie_free_days_common <- nimbleCode({
-  
-  for (i in 1:N) {
-    y[i] ~ dcat(p[i, 1:J])
-    log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*ice_free_days_previous_s[i] + sigma1 * eta1[year[i]]
-    log(q[i, 3]) <- b0 + a1*ice_free_days_previous_s[i] + sigma1 * eta1[year[i]]
-    log(q[i, 4]) <- c0 + a1*ice_free_days_previous_s[i] + sigma1 * eta1[year[i]]
-    
-    for (j in 1:J) {
-      p[i, j] <- q[i, j]/sum(q[i, 1:J])
-    }
-  }
-  
-  for (i in 1:nbyear) {
-    eps1[i] <- sigma1 * eta1[i]
-    eta1[i] ~ dnorm(0.00000E+00, 1)
-  }
-  
-  sigma1 ~ dunif(0.00000E+00, 10)
-  
-  a0 ~ dnorm(0.00000E+00, 0.1)
-  a1 ~ dnorm(0.00000E+00, 0.1)
-  b0 ~ dnorm(0.00000E+00, 0.1)
-  c0 ~ dnorm(0.00000E+00, 0.1)
-})
-
-{model_code <- "1.1.2_D_Nimble"
-  
-# Predictor
-var <- data_model$ice_free_days_previous
-var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "ice_free_days_previous_s"
-var_full_name <- "Ice-free days in previous year"
-  
-# Number of slopes
-slope <- "common"
-# slope <- "distinct" 
-  
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
-}
-
-# Put all the data in a list
-dat <- list(y, N, J, year, nbyear, var_scaled)
-names(dat) <- c("y", "N", "J","year", "nbyear", var_short_name)
-
-# Define the parameters to estimate
-params <- define_params(mode, slope)[[1]]
-
-# Generate starting values
-inits <- get_inits(y, var_scaled, mode, slope)
-
-temp.dat <- data.frame(y = y, var_scaled = var_scaled)
-temp.dat$yfac <- as.factor(temp.dat$y)   # Ajout de Y en facteur
-mnl.dat <- mlogit.data(temp.dat, varying = NULL, choice = "yfac", shape = "wide") 
-mlogit.mod <- mlogit(yfac ~ 1| var_scaled, 
-                     data = mnl.dat, 
-                     reflevel = ifelse(mode == "_bis", "1", "0"))
-
-coefs <- as.vector(summary(mlogit.mod)$coefficients)
-inits1 <- list(a0 = coefs[1], b0 = coefs[2], c0 = coefs[3],
-               a1 = coefs[4], eps1 = 0,
-               sigma1 = runif(1))
-inits2 <- list(a0 = coefs[1] + 0.1, b0 = coefs[2] - 0.1, c0 = coefs[3] + 0.1,
-               a1 = coefs[4] -0.1,
-               sigma1 = runif(1), eps1 = 0)
-  
-inits <- list(inits1, inits2)
-
-
-my.constants <- list(N = length(y), # nb of females captured
-                     J = length(levels(y))) 
-
-mcmc.output <- nimbleMCMC(code = Nimble_ie_free_days_common,     # model code  
-                          data = dat,                  # data
-                          constants = my.constants,        # constants
-                          inits = get_inits(y, var_scaled, mode, slope),          # initial values
-                          monitors = params,   # parameters to monitor
-                          niter = 30000,                  # nb iterations
-                          nburnin = 5000,              # length of the burn-in
-                          nchains = 1)
-initial.values <- function() {
-  list(phi = runif(1,0,1))
-}
