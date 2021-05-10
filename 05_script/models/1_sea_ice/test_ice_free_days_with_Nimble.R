@@ -11,6 +11,7 @@ library(R2jags)
 library(viridis)
 library(ggmcmc)
 library(gridExtra)
+library(nimble)
 Sys.setenv(LANG = "en")
 
 writeLines(
@@ -112,7 +113,6 @@ my.constants <- list(N = length(y), # nb of females captured
 
 # ~~~ a. Nimble model --------------------------------------------------------------
 
-library(nimble)
 Nimble_ie_free_days_common <- nimbleCode({
   
   for (i in 1:N) {
