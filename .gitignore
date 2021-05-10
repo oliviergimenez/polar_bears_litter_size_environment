@@ -37,3 +37,71 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+
+
+# Other files
+
+# ~ 0. In the mother folder
+
+GoldenLabGuidelines_20191101.pdf
+
+# ~ 1. In the electronic_lab_book folder
+
+01_electronic_lab_book/
+
+
+# ~ 2. In the past_work_&_literature folder
+
+02_past_work_&_literature/
+
+
+# ~ 3. In the methods_protocols folder
+
+03_methods_protocols/
+
+
+# ~ 4. In the raw_data folder
+
+04_raw_data/
+
+
+
+# ~ 5. In the script folder
+
+05_script/OLD/
+05_script/environmental_covariates/
+
+key_for_model_IDs.xlsx
+progress_models.xlsx
+figures_compte_rendu_PLR.R
+models_dorinda_new_data.R
+
+
+# ~ 6. In the processed_data folder
+
+bathymetry_data/
+subpopulation_boundary/
+svalbard_map/
+temperature_data/
+sea_ice_barents_sea_for_manipulations.tif
+
+
+# ~ 7. In the results folder
+
+07_results/01_interim_results/polar_bear_data_exploration/
+07_results/01_interim_results/model_outputs/
+
+
+# ~ 8. In the manuscripts_articles folder
+
+08_manuscripts_articles/
+
+# ~ 9. In the presentations folder
+
+09_presentations/
+
+# ~ 10. In the meetings folder
+
+10_meetings/
