@@ -52,7 +52,8 @@ capture_data_females_w_cubs <- capture_data_all %>%
          !is.na(z_length)) %>%
   mutate(year = as.numeric(year),
          age_for_analyses = as.numeric(age_for_analyses),
-         cub_number = as.numeric(cub_number)) %>%
+         cub_number = as.numeric(cub_number),
+         cub_number_2 = ifelse(cub_number %in% c(2, 3), 4, as.numeric(cub_number))) %>%
   arrange(date)
 
 write_csv(capture_data_females_w_cubs, "06_processed_data/CR_data/CR_f_with_cubs_clean.csv")
@@ -68,7 +69,8 @@ capture_data_females <- capture_data_all %>%
          !is.na(z_length)) %>%
   mutate(year = as.numeric(year),
          age_for_analyses = as.numeric(age_for_analyses),
-         cub_number = ifelse(is.na(cub_number), 0, as.numeric(cub_number))) %>%
+         cub_number = ifelse(is.na(cub_number), 0, as.numeric(cub_number)),
+         cub_number_2 = ifelse(cub_number %in% c(2, 3), 4, as.numeric(cub_number))) %>%
   arrange(date)
 
 write_csv(capture_data_females, "06_processed_data/CR_data/CR_f_clean.csv")
