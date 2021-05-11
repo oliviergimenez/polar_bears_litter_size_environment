@@ -5,9 +5,7 @@
 #==============================================================================#
 
 library(tidyverse)
-library(lubridate)
 library(mlogit)
-library(R2jags)
 library(viridis)
 library(ggmcmc)
 library(gridExtra)
@@ -210,8 +208,6 @@ end <- Sys.time()
 end - start
 
 
-
-
 get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
 # 1090.482
 
@@ -229,14 +225,20 @@ load(file = paste0("07_results/01_interim_results/model_outputs/model_",
 
 
 
-
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
 
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
 
-# Plot
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
 ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
@@ -251,17 +253,16 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        color = "",
        linetype = "") 
 
-ggsave(filename = paste0("07_results/01_interim_results/model_outputs/graphs/model_", 
-                         model_code, "_effect_", effect, toupper(mode), ".png"),
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_", slope, mode),
-            paste0("fit_", model_code, "_", slope, mode, "_for_plot"),
-            paste0("DICw_", model_code, "_", slope, mode)))
-rm(model_code, slope, mode,
-   dat, params, nb.beta, inits, var, var_scaled, 
-   var_short_name, var_full_name,  nb.beta)
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -338,6 +339,44 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -407,11 +446,48 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
 
-
 # ~~~ b. Check convergence -----------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -492,6 +568,43 @@ load(file = paste0("07_results/01_interim_results/model_outputs/model_",
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
 
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -571,6 +684,45 @@ load(file = paste0("07_results/01_interim_results/model_outputs/model_",
 
 
 
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
+
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -645,6 +797,45 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -718,6 +909,45 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -797,6 +1027,45 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(model_code, effect, dat, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#

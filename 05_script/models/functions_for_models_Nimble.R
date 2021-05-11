@@ -98,146 +98,106 @@ check_convergence <- function(jags_output, model_code, slope, mode) {
   
 }
 
-
-get_probabilities <- function(model_code, mode, slope, var_scaled, var) {
-  res <- get(paste0("fit_", model_code, "_", slope, mode))$BUGSoutput$sims.matrix
+get_probabilities <- function(model_code, effect, mode, var_scaled, var) { 
+  res <- rbind(get(paste0("fit_", model_code, "_effect_", effect, mode))$samples$chain1,
+               get(paste0("fit_", model_code, "_effect_", effect, mode))$samples$chain2)
   
-  # If females without cubs are included
-  if(mode == "") {
-    if(slope == "common") {
-      b1cub <- res[, c(1, 2)]
-      b2cub <- res[, c(3, 2)] 
-      b3cub <- res[, c(4, 2)] 
-    } else {
-      b1cub <- res[, c(1, 2)]
-      b2cub <- res[, c(3, 4)]
-      b3cub <- res[, c(5, 6)]
-    }
-    range <- range(var_scaled)
+  # Create grid of x values
+  range <- range(var_scaled)
+  
+  lengthgrid <- 100
+  grid_scaled <- seq(from = range[1] - 0.1*(range[2] - range[1]), 
+                     to = range[2] + 0.1*(range[2] - range[1]), 
+                     length = lengthgrid)
+  
+  grid <- grid_scaled * sd(var) + mean(var)
+  
+  
+  q0cub <- q1cub <- q2_3cub <- matrix(data = NA, 
+                                      nrow = dim(res)[1], 
+                                      ncol = lengthgrid)
+  
+  if (effect == "1c_VS_0c") {
+    b1cub <- res[, c(1, 2)]
+    b2_3cub <- res[, 3] 
     
-    lengthgrid <- 100
-    grid_scaled <- seq(from = range[1] - 0.1*(range[2] - range[1]), 
-                       to = range[2] + 0.1*(range[2] - range[1]), 
-                       length = lengthgrid)
-    
-    grid <- grid_scaled * sd(var) + mean(var)
-    
-    
-    q0cub <- q1cub <- q2cub <- q3cub <- matrix(data = NA, 
-                                               nrow = dim(b2cub)[1], 
-                                               ncol = lengthgrid)
     for (i in 1:lengthgrid) {
-      for (j in 1:dim(b2cub)[1]) {
+      for (j in 1:dim(res)[1]) {
         q0cub[j, i] <- exp(0)
         q1cub[j, i] <- exp(b1cub[j, 1] + b1cub[j, 2] * grid_scaled[i])	
-        q2cub[j, i] <- exp(b2cub[j, 1] + b2cub[j, 2] * grid_scaled[i])	
-        q3cub[j, i] <- exp(b3cub[j, 1] + b3cub[j, 2] * grid_scaled[i])		
+        q2_3cub[j, i] <- exp(b2_3cub[j])	
       }
     }
-    # Backtransform
-    p0cub <- p1cub <- p2cub <- p3cub <- matrix(NA, dim(b2cub)[1], lengthgrid)
-    for (i in 1:lengthgrid){
-      for (j in 1:dim(b2cub)[1]){
-        norm <- (q0cub[j, i] + q1cub[j, i] + q2cub[j, i] + q3cub[j,i])
-        p0cub[j, i] <- q0cub[j, i]/norm
-        p1cub[j, i] <- q1cub[j, i]/norm
-        p2cub[j, i] <- q2cub[j, i]/norm
-        p3cub[j, i] <- q3cub[j, i]/norm
-      }
-    }
-    df.for.plot <- data.frame(var = grid,
-                              mean_p_0_cub = apply(p0cub, 2, mean),
-                              mean_p_1_cub = apply(p1cub, 2, mean),
-                              mean_p_2_cub = apply(p2cub, 2, mean),
-                              mean_p_3_cub = apply(p3cub, 2, mean),
-                              ci_p_0_cub_2.5 = apply(p0cub, 2, quantile, probs = 0.025),
-                              ci_p_0_cub_97.5 = apply(p0cub, 2, quantile, probs = 0.975),
-                              ci_p_1_cub_2.5 = apply(p1cub, 2, quantile, probs = 0.025),
-                              ci_p_1_cub_97.5 = apply(p1cub, 2, quantile, probs = 0.975),
-                              ci_p_2_cub_2.5 = apply(p2cub, 2, quantile, probs = 0.025),
-                              ci_p_2_cub_97.5 = apply(p2cub, 2, quantile, probs = 0.975),
-                              ci_p_3_cub_2.5 = apply(p3cub, 2, quantile, probs = 0.025),
-                              ci_p_3_cub_97.5 = apply(p3cub, 2, quantile, probs = 0.975)) %>%
-      pivot_longer(cols = c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_cub", "mean_p_3_cub",
-                            "ci_p_0_cub_2.5", "ci_p_0_cub_97.5", 
-                            "ci_p_1_cub_2.5", "ci_p_1_cub_97.5", 
-                            "ci_p_2_cub_2.5", "ci_p_2_cub_97.5", 
-                            "ci_p_3_cub_2.5", "ci_p_3_cub_97.5")) %>%
-      mutate(cub_number = ifelse(name %in% c("mean_p_0_cub", "ci_p_0_cub_2.5", "ci_p_0_cub_97.5"), 0, 
-                                 ifelse(name %in% c("mean_p_1_cub", "ci_p_1_cub_2.5", "ci_p_1_cub_97.5"), 1, 
-                                        ifelse(name %in% c("mean_p_2_cub", "ci_p_2_cub_2.5", "ci_p_2_cub_97.5"), 2, 3))),
-             type = ifelse(name %in% c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_cub", "mean_p_3_cub"), "mean", "credible_interval"))
-    
-    color_labels <- c("no cubs", "1 cub", "2 cubs", "3 cubs")
-    
-    
-    # If females without cubs are excluded
-  } else {
-    if(slope == "common") {
-      b2cub <- res[, c(1, 2)]
-      b3cub <- res[, c(3, 2)] 
-    } else {
-      b2cub <- res[, c(1, 2)] 
-      b3cub <- res[, c(3, 4)]
-    }
-    
-    range <- range(var_scaled)
-    
-    lengthgrid <- 100
-    grid_scaled <- seq(from = range[1] - 0.1*(range[2] - range[1]), 
-                       to = range[2] + 0.1*(range[2] - range[1]), 
-                       length = lengthgrid)
-    
-    grid <- grid_scaled * sd(var) + mean(var)
-    
-    q1cub <- q2cub <- q3cub <- matrix(data = NA, 
-                                      nrow = dim(b2cub)[1], 
-                                      ncol = lengthgrid)
-    
-    for (i in 1:lengthgrid){
-      for (j in 1:dim(b2cub)[1]){
-        q1cub[j, i] <- exp(0)
-        q2cub[j, i] <- exp(b2cub[j, 1] + b2cub[j, 2] * grid_scaled[i])	
-        q3cub[j, i] <- exp(b3cub[j, 1] + b3cub[j, 2] * grid_scaled[i])		
-      }
-    }
-    
-    # backtransform
-    p1cub <- matrix(NA, dim(b2cub)[1], lengthgrid)
-    p2cub <- p1cub
-    p3cub <- p1cub
-    for (i in 1:lengthgrid){
-      for (j in 1:dim(b2cub)[1]){
-        norm <- (q1cub[j, i] + q2cub[j, i] + q3cub[j,i])
-        p1cub[j, i] <- q1cub[j, i]/norm
-        p2cub[j, i] <- q2cub[j, i]/norm
-        p3cub[j, i] <- q3cub[j, i]/norm
-      }
-    }
-    df.for.plot <- data.frame(var = grid,
-                              mean_p_1_cub = apply(p1cub, 2, mean),
-                              mean_p_2_cub = apply(p2cub, 2, mean),
-                              mean_p_3_cub = apply(p3cub, 2, mean),
-                              ci_p_1_cub_2.5 = apply(p1cub, 2, quantile, probs = 0.025),
-                              ci_p_1_cub_97.5 = apply(p1cub, 2, quantile, probs = 0.975),
-                              ci_p_2_cub_2.5 = apply(p2cub, 2, quantile, probs = 0.025),
-                              ci_p_2_cub_97.5 = apply(p2cub, 2, quantile, probs = 0.975),
-                              ci_p_3_cub_2.5 = apply(p3cub, 2, quantile, probs = 0.025),
-                              ci_p_3_cub_97.5 = apply(p3cub, 2, quantile, probs = 0.975)) %>%
-      pivot_longer(cols = c("mean_p_1_cub", "mean_p_2_cub", "mean_p_3_cub",
-                            "ci_p_1_cub_2.5", "ci_p_1_cub_97.5", 
-                            "ci_p_2_cub_2.5", "ci_p_2_cub_97.5", 
-                            "ci_p_3_cub_2.5", "ci_p_3_cub_97.5")) %>%
-      mutate(cub_number = ifelse(name %in% c("mean_p_1_cub", "ci_p_1_cub_2.5", "ci_p_1_cub_97.5"), 1, 
-                                 ifelse(name %in% c("mean_p_2_cub", "ci_p_2_cub_2.5", "ci_p_2_cub_97.5"), 2, 3)),
-             type = ifelse(name %in% c("mean_p_1_cub", "mean_p_2_cub", 
-                                       "mean_p_3_cub"), "mean", "credible_interval"))
-    
-    color_labels <- c("1 cub", "2 cubs", "3 cubs")
   }
+  if (effect == "2_3c_VS_0c") {
+    b1cub <- res[, 1]
+    b2_3cub <- res[, c(2,3)] 
+    
+    for (i in 1:lengthgrid) {
+      for (j in 1:dim(res)[1]) {
+        q0cub[j, i] <- exp(0)
+        q1cub[j, i] <- exp(b1cub[j])	
+        q2_3cub[j, i] <- exp(b2_3cub[j, 1] + b2_3cub[j, 2] * grid_scaled[i])	
+      }
+    }
+  }
+  if (effect %in% c("common")) {
+    b1cub <- res[, c(1, 2)]
+    b2_3cub <- res[, c(3, 2)] 
+    
+    for (i in 1:lengthgrid) {
+      for (j in 1:dim(res)[1]) {
+        q0cub[j, i] <- exp(0)
+        q1cub[j, i] <- exp(b1cub[j, 1] + b1cub[j, 2] * grid_scaled[i])	
+        q2_3cub[j, i] <- exp(b2_3cub[j, 1] + b2_3cub[j, 2] * grid_scaled[i])
+      }
+    }
+  }
+  if (effect %in% c("distinct")) {
+    b1cub <- res[, c(1, 2)]
+    b2_3cub <- res[, c(3, 4)] 
+    
+    for (i in 1:lengthgrid) {
+      for (j in 1:dim(res)[1]) {
+        q0cub[j, i] <- exp(0)
+        q1cub[j, i] <- exp(b1cub[j, 1] + b1cub[j, 2] * grid_scaled[i])	
+        q2_3cub[j, i] <- exp(b2_3cub[j, 1] + b2_3cub[j, 2] * grid_scaled[i])
+      }
+    }
+  }
+  # Backtransform
+  p0cub <- p1cub <- p2_3cub <- matrix(NA, dim(res)[1], lengthgrid)
+  for (i in 1:lengthgrid){
+    for (j in 1:dim(res)[1]){
+      norm <- (q0cub[j, i] + q1cub[j, i] + q2_3cub[j, i])
+      p0cub[j, i] <- q0cub[j, i]/norm
+      p1cub[j, i] <- q1cub[j, i]/norm
+      p2_3cub[j, i] <- q2_3cub[j, i]/norm
+    }
+  }
+  
+  df.for.plot <- data.frame(var = grid,
+                            mean_p_0_cub = apply(p0cub, 2, mean),
+                            mean_p_1_cub = apply(p1cub, 2, mean),
+                            mean_p_2_3_cub = apply(p2_3cub, 2, mean),
+                            ci_p_0_cub_2.5 = apply(p0cub, 2, quantile, probs = 0.025),
+                            ci_p_0_cub_97.5 = apply(p0cub, 2, quantile, probs = 0.975),
+                            ci_p_1_cub_2.5 = apply(p1cub, 2, quantile, probs = 0.025),
+                            ci_p_1_cub_97.5 = apply(p1cub, 2, quantile, probs = 0.975),
+                            ci_p_2_3_cub_2.5 = apply(p2_3cub, 2, quantile, probs = 0.025),
+                            ci_p_2_3_cub_97.5 = apply(p2_3cub, 2, quantile, probs = 0.975)) %>%
+    pivot_longer(cols = c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub",
+                          "ci_p_0_cub_2.5", "ci_p_0_cub_97.5", 
+                          "ci_p_1_cub_2.5", "ci_p_1_cub_97.5", 
+                          "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5")) %>%
+    mutate(cub_number = ifelse(name %in% c("mean_p_0_cub", "ci_p_0_cub_2.5", "ci_p_0_cub_97.5"), 0, 
+                               ifelse(name %in% c("mean_p_1_cub", "ci_p_1_cub_2.5", "ci_p_1_cub_97.5"), 1, 
+                                      ifelse(name %in% c("mean_p_2_3_cub", "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5"), 2, 10))),
+           type = ifelse(name %in% c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub"), "mean", "credible_interval"))
+  
+  color_labels <- c("no cubs", "1 cub", "2-3 cubs")
   return(list(df.for.plot, color_labels))
 }
-
 
 
 
