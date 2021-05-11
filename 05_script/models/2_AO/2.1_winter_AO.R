@@ -103,6 +103,7 @@ inits <- get_inits(y, var_scaled, mode, slope)
 
 
 # Run the model
+start <- Sys.time()
 assign(x = paste0("fit_", model_code, "_", slope, mode),
        value = jags(data = dat, 
                     inits = inits, 
@@ -111,8 +112,8 @@ assign(x = paste0("fit_", model_code, "_", slope, mode),
                     n.iter = 30000, n.burnin = 5000, 
                     n.thin = 10,
                     model.file = get(paste0("model_", model_code, "_", slope, mode[1], "_slope"))))
-
-
+end <- Sys.time()
+end - start
 # assign(x = paste0("DICw_", model_code, "_", slope, mode[1]),
 #        value = get(paste0("fit_", model_code, "_", slope, mode[1]))$BUGSoutput$DIC)
 
