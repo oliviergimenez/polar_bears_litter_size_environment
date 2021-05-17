@@ -62,13 +62,7 @@ summary(y)
   id_fem
 }
 
-N <- length(y) # nb of reproductive events
-J <- length(levels(y)) # number of categories
-
-my.constants <- list(N = length(y), # nb of females captured
-                  J = length(levels(y)),
-                  year = as.numeric(year),
-                  nbyear = nbyear) 
+dat <- list(y = as.numeric(y))
 
 # Load the JAGS models + the ancillary functions
 source("05_script/models/1_sea_ice/1.1_Nimble_ice_free_days.R")
@@ -172,10 +166,14 @@ var_full_name <- "Ice-free days in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
-}
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -209,7 +207,7 @@ end - start
 
 
 get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1090.482
+# 1085.991
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -287,10 +285,15 @@ var_full_name <- "Ice-free days in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -322,8 +325,6 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
                           WAIC = TRUE))
 end <- Sys.time()
 end - start
-
-
 
 
 get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
@@ -399,10 +400,15 @@ var_full_name <- "Ice-free days in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -514,10 +520,15 @@ var_full_name <- "Ice-free days in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -631,10 +642,14 @@ var_full_name <- "Ice-free days two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
-}
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -746,10 +761,15 @@ var_full_name <- "Ice-free days two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -858,10 +878,15 @@ var_full_name <- "Ice-free days two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -974,10 +999,15 @@ var_full_name <- "Ice-free days two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params

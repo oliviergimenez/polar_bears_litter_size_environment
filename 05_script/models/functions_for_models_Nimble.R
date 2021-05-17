@@ -68,12 +68,54 @@ get_coefs_and_params <- function(y, var_scaled, effect, mode) {
 
 
 
+################################################################################
+
+library(ggmcmc)
+library(R2jags)
+
+load("07_results/01_interim_results/model_outputs/OLD/model_1.1.2_D_common_slope.RData")
+jags_output <- fit_1.1.2_D_common
+
+x <- as.mcmc(jags_output)
+x2 <- ggs(x)
+y <- as.mcmc(fit_1.2.2_E_effect_1c_VS_0c$samples)
+y1 <- fit_1.2.2_E_effect_1c_VS_0c$samples
+
+nimble.output <- fit_1.2.2_E_effect_1c_VS_0c
+df_mcmc_final <- c()
+for (i in 1:length(nimble.output$samples)) {
+  df_mcmc <- as.data.frame(mcmc.chains$chain1)
+  columns_eps <- grep(pattern = "eps1", x = colnames(df_mcmc))
+  df_mcmc <- df_mcmc[, -columns_eps] %>%
+    mutate(Iteration = seq(1, dim(mcmc.chains$chain1)[1]))
+  columns_to_pivot <- colnames(df_mcmc)[-ncol(df_mcmc)]
+  df_mcmc <- df_mcmc %>%
+    mutate(Chain = i) %>%
+    pivot_longer(data = .,
+                 cols = all_of(columns_to_pivot),
+                 names_to = "Parameter") %>%
+    arrange(Parameter)
+  df_mcmc_final <- rbind(df_mcmc_final, df_mcmc)
+}
+
+  
+  
+  
+
+f1 <- ggs_traceplot(df_mcmc_final) + 
+  theme_bw() +
+  theme(legend.position = "none")
+f2 <- ggs_density(df_mcmc_final) + 
+  theme_bw()
+f3 <- ggs_running(df_mcmc_final) + 
+  theme_bw() +
+  theme(legend.position = "none")
+x <- grid.arrange(f1, f2, f3, ncol = 3, nrow = 1)
 
 
-
-
-
-
+y2 <- ggs(y)
+processed_output <- ggs(as.mcmc(fit_1.2.2_E_effect_1c_VS_0c)) %>%
+  filter(Parameter %in% c("a0", "a1", "a2", "b0", "b1", "c0", "c1", "deviance"))
 
 check_convergence <- function(jags_output, model_code, slope, mode) {
   processed_output <- ggs(as.mcmc(jags_output)) %>%
@@ -97,6 +139,20 @@ check_convergence <- function(jags_output, model_code, slope, mode) {
          width = 17.5, height = 2.5*nbr_rows)
   
 }
+
+
+################################################################################
+
+
+
+
+
+
+
+
+
+
+
 
 get_probabilities <- function(model_code, effect, mode, var_scaled, var) { 
   res <- rbind(get(paste0("fit_", model_code, "_effect_", effect, mode))$samples$chain1,
@@ -202,128 +258,93 @@ get_probabilities <- function(model_code, effect, mode, var_scaled, var) {
 
 
 
-get_probabilities_factor <- function(model_code, mode, slope, var_scaled, var) {
-  res <- get(paste0("fit_", model_code, "_", slope, mode))$BUGSoutput$sims.matrix
+get_probabilities_factor <- function(model_code, effect, mode, var_scaled, var) {
+  res <- rbind(get(paste0("fit_", model_code, "_effect_", effect, mode))$samples$chain1,
+               get(paste0("fit_", model_code, "_effect_", effect, mode))$samples$chain2)
   
-  # If females without cubs are included
-  if(mode == "") {
-    if(slope == "common") {
-      b1cub <- res[, c(1, 2)]
-      b2cub <- res[, c(3, 2)] 
-      b3cub <- res[, c(4, 2)] 
-    } else {
-      b1cub <- res[, c(1, 2)]
-      b2cub <- res[, c(3, 4)] 
-      b3cub <- res[, c(5, 6)] 
-    }
+  # Create grid of x values
+  lengthgrid <- 2
+  grid <- seq(from = 0,
+              to = 1, 
+              length = lengthgrid)
+  
+  q0cub <- q1cub <- q2_3cub <- matrix(data = NA, 
+                                      nrow = dim(res)[1], 
+                                      ncol = lengthgrid)
+  
+  if (effect == "1c_VS_0c") {
+    b1cub <- res[, c(1, 2)]
+    b2_3cub <- res[, 3] 
     
-    lengthgrid <- 2
-    grid <- seq(from = 0,
-                to = 1, 
-                length = lengthgrid)
-    
-    q0cub <- q1cub <- q2cub <- q3cub <- matrix(data = NA, 
-                                               nrow = dim(b2cub)[1], 
-                                               ncol = lengthgrid)
-    for (i in 1:lengthgrid){
-      for (j in 1:dim(b2cub)[1]){
+    for (i in 1:lengthgrid) {
+      for (j in 1:dim(res)[1]) {
         q0cub[j, i] <- exp(0)
         q1cub[j, i] <- exp(b1cub[j, 1] + b1cub[j, 2] * grid[i])	
-        q2cub[j, i] <- exp(b2cub[j, 1] + b2cub[j, 2] * grid[i])	
-        q3cub[j, i] <- exp(b3cub[j, 1] + b3cub[j, 2] * grid[i])		
-      }}
-    # backtransform
-    p0cub <- p1cub <- p2cub <- p3cub <- matrix(NA, dim(b2cub)[1], lengthgrid)
-    for (i in 1:lengthgrid){
-      for (j in 1:dim(b2cub)[1]){
-        norm <- (q0cub[j, i] + q1cub[j, i] + q2cub[j, i] + q3cub[j,i])
-        p0cub[j, i] <- q0cub[j, i]/norm
-        p1cub[j, i] <- q1cub[j, i]/norm
-        p2cub[j, i] <- q2cub[j, i]/norm
-        p3cub[j, i] <- q3cub[j, i]/norm
+        q2_3cub[j, i] <- exp(b2_3cub[j])	
       }
     }
-    
-    df.for.plot <- data.frame(var = c(rep(0, times = length(p1cub)/2),
-                                      rep(1, times = length(p1cub)/2),
-                                      rep(0, times = length(p1cub)/2),
-                                      rep(1, times = length(p1cub)/2),
-                                      rep(0, times = length(p1cub)/2),
-                                      rep(1, times = length(p1cub)/2),
-                                      rep(0, times = length(p1cub)/2),
-                                      rep(1, times = length(p1cub)/2)),
-                              probability = c(p0cub[, 1], p0cub[, 2],
-                                              p1cub[, 1], p1cub[, 2],
-                                              p2cub[, 1], p2cub[, 2],
-                                              p3cub[, 1], p3cub[, 2]),
-                              nbr_cub = c(rep("no cubs", times = length(p1cub)),
-                                          rep("1 cub", times = length(p1cub)),
-                                          rep("2 cubs", times = length(p1cub)),
-                                          rep("3 cubs", times = length(p1cub)))) %>%
-      mutate(nbr_cub = factor(nbr_cub,      # Reordering group factor levels
-                              levels = c("no cubs", "1 cub", "2 cubs", "3 cubs")))
-    color_labels <- c("no cubs", "1 cub", "2 cubs", "3 cubs")
-    
-    
-    
-    # If females without cubs are excluded
-  } else {
-    if(slope == "common") {
-      b2cub <- res[, c(1, 2)]
-      b3cub <- res[, c(3, 2)] 
-    } else {
-      b2cub <- res[, c(1, 2)] 
-      b3cub <- res[, c(3, 4)]
-    }
-    
-    range <- range(var_scaled)
-    
-    lengthgrid <- 2
-    grid <- seq(from = 0,
-                to = 1, 
-                length = lengthgrid)
-    
-    q1cub <- q2cub <- q3cub <- matrix(data = NA, 
-                                      nrow = dim(b2cub)[1], 
-                                      ncol = lengthgrid)
-    
-    for (i in 1:lengthgrid){
-      for (j in 1:dim(b2cub)[1]){
-        q1cub[j, i] <- exp(0)
-        q2cub[j, i] <- exp(b2cub[j, 1] + b2cub[j, 2] * grid[i])	
-        q3cub[j, i] <- exp(b3cub[j, 1] + b3cub[j, 2] * grid[i])		
-      }
-    }
-    
-    # backtransform
-    p1cub <- matrix(NA, dim(b2cub)[1], lengthgrid)
-    p2cub <- p1cub
-    p3cub <- p1cub
-    for (i in 1:lengthgrid){
-      for (j in 1:dim(b2cub)[1]){
-        norm <- (q1cub[j, i] + q2cub[j, i] + q3cub[j,i])
-        p1cub[j, i] <- q1cub[j, i]/norm
-        p2cub[j, i] <- q2cub[j, i]/norm
-        p3cub[j, i] <- q3cub[j, i]/norm
-      }
-    }
-    df.for.plot <- data.frame(var = c(rep(0, times = length(p1cub)/2),
-                                      rep(1, times = length(p1cub)/2),
-                                      rep(0, times = length(p1cub)/2),
-                                      rep(1, times = length(p1cub)/2),
-                                      rep(0, times = length(p1cub)/2),
-                                      rep(1, times = length(p1cub)/2)),
-                              probability = c(p1cub[, 1], p1cub[, 2],
-                                              p2cub[, 1], p2cub[, 2],
-                                              p3cub[, 1], p3cub[, 2]),
-                              nbr_cub = c(rep("1 cub", times = length(p1cub)),
-                                          rep("2 cubs", times = length(p1cub)),
-                                          rep("3 cubs", times = length(p1cub)))) %>%
-      mutate(nbr_cub = factor(nbr_cub,      # Reordering group factor levels
-                              levels = c("1 cub", "2 cubs", "3 cubs")))
-    
-    color_labels <- c("1 cub", "2 cubs", "3 cubs")
   }
+  if (effect == "2_3c_VS_0c") {
+    b1cub <- res[, 1]
+    b2_3cub <- res[, c(2,3)] 
+    
+    for (i in 1:lengthgrid) {
+      for (j in 1:dim(res)[1]) {
+        q0cub[j, i] <- exp(0)
+        q1cub[j, i] <- exp(b1cub[j])	
+        q2_3cub[j, i] <- exp(b2_3cub[j, 1] + b2_3cub[j, 2] * grid[i])	
+      }
+    }
+  }
+  if (effect %in% c("common")) {
+    b1cub <- res[, c(1, 2)]
+    b2_3cub <- res[, c(3, 2)] 
+    
+    for (i in 1:lengthgrid) {
+      for (j in 1:dim(res)[1]) {
+        q0cub[j, i] <- exp(0)
+        q1cub[j, i] <- exp(b1cub[j, 1] + b1cub[j, 2] * grid[i])	
+        q2_3cub[j, i] <- exp(b2_3cub[j, 1] + b2_3cub[j, 2] * grid[i])
+      }
+    }
+  }
+  if (effect %in% c("distinct")) {
+    b1cub <- res[, c(1, 2)]
+    b2_3cub <- res[, c(3, 4)] 
+    
+    for (i in 1:lengthgrid) {
+      for (j in 1:dim(res)[1]) {
+        q0cub[j, i] <- exp(0)
+        q1cub[j, i] <- exp(b1cub[j, 1] + b1cub[j, 2] * grid[i])	
+        q2_3cub[j, i] <- exp(b2_3cub[j, 1] + b2_3cub[j, 2] * grid[i])
+      }
+    }
+  }
+  # backtransform
+  p0cub <- p1cub <- p2_3cub <- matrix(NA, dim(res)[1], lengthgrid)
+  for (i in 1:lengthgrid){
+    for (j in 1:dim(res)[1]){
+      norm <- (q0cub[j, i] + q1cub[j, i] + q2_3cub[j, i])
+      p0cub[j, i] <- q0cub[j, i]/norm
+      p1cub[j, i] <- q1cub[j, i]/norm
+      p2_3cub[j, i] <- q2_3cub[j, i]/norm
+    }
+  }
+  df.for.plot <- data.frame(var = c(rep(0, times = length(p1cub)/2),
+                                    rep(1, times = length(p1cub)/2),
+                                    rep(0, times = length(p1cub)/2),
+                                    rep(1, times = length(p1cub)/2),
+                                    rep(0, times = length(p1cub)/2),
+                                    rep(1, times = length(p1cub)/2)),
+                            probability = c(p0cub[, 1], p0cub[, 2],
+                                            p1cub[, 1], p1cub[, 2],
+                                            p2_3cub[, 1], p2_3cub[, 2]),
+                            nbr_cub = c(rep("no cubs", times = length(p1cub)),
+                                        rep("1 cub", times = length(p1cub)),
+                                        rep("2-3 cubs", times = length(p1cub)))) %>%
+    mutate(nbr_cub = factor(nbr_cub,      # Reordering group factor levels
+                            levels = c("no cubs", "1 cub", "2-3 cubs")))
+  color_labels <- c("no cubs", "1 cub", "2-3 cubs")
   return(list(df.for.plot, color_labels))
 }
 

@@ -109,7 +109,6 @@ nb.beta <- define_params(mode, slope)[[2]]
 # Generate starting values
 inits <- get_inits(y, var_scaled, mode, slope)
 
-
 # Run the model
 assign(x = paste0("fit_", model_code, "_", slope, mode),
        value = jags(data = dat, 

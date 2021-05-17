@@ -63,15 +63,9 @@ summary(y)
   id_fem
 }
 
-N <- length(y) # nb of reproductive events
-J <- length(levels(y)) # number of categories
+dat <- list(y = as.numeric(y))
 
-my.constants <- list(N = length(y), # nb of females captured
-                     J = length(levels(y)),
-                     year = as.numeric(year),
-                     nbyear = nbyear) 
-
-# Load the JAGS models + the ancillary functions
+# Load the Nimble models + the ancillary functions
 source("05_script/models/1_sea_ice/1.2_Nimble_day_sea_ice_retreat.R")
 source("05_script/models/functions_for_models_Nimble.R")
 
@@ -115,10 +109,15 @@ var_full_name <- "Day of sea ice retreat in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -149,8 +148,6 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
                           WAIC = TRUE))
 end <- Sys.time()
 end - start
-
-
 
 
 get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
@@ -231,10 +228,15 @@ var_full_name <- "Day of sea ice retreat in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -343,10 +345,15 @@ var_full_name <- "Day of sea ice retreat in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -460,10 +467,15 @@ var_full_name <- "Day of sea ice retreat in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -574,10 +586,15 @@ var_full_name <- "Day of sea ice retreat two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -688,10 +705,15 @@ var_full_name <- "Day of sea ice retreat two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -800,10 +822,15 @@ var_full_name <- "Day of sea ice retreat two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -915,10 +942,15 @@ var_full_name <- "Day of sea ice retreat two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params

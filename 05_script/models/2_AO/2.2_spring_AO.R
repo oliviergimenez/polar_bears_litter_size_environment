@@ -20,8 +20,6 @@ CR_data <- read_csv("06_processed_data/CR_data/CR_f_clean.csv")
 # AO data
 AO_data <- read_csv("06_processed_data/AO_data/AO_data_winter_spring_1990-2019.csv")
 
-
-
 data_model <- CR_data %>%
   left_join(x = CR_data,
             y = AO_data,
