@@ -71,7 +71,16 @@ GoldenLabGuidelines_20191101.pdf
 # ~ 5. In the script folder
 
 05_script/OLD/
-05_script/environmental_covariates/
+05_script/environmental_covariates/original_scripts_sent_to_me/
+AO_processing.R
+bathymetry.R
+draw_polygon_on_map.R
+NAO_processing.R
+subpopulation_boundaries.R
+svalbard_map.R
+temperature_MET_download_process.R
+temperature_processing.R
+
 
 key_for_model_IDs.xlsx
 progress_models.xlsx
