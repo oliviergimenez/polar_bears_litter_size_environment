@@ -11,6 +11,7 @@ library(nimble)
 library(viridis)
 library(ggmcmc)
 library(gridExtra)
+library(MCMCvis)
 Sys.setenv(LANG = "en")
 
 
@@ -170,12 +171,11 @@ fit_model_1$WAIC
 save(fit_model_1, 
      file = "07_results/01_interim_results/model_outputs/several_predictors/model_1.RData")
 
-
 # ~~~ b. Check convergence -----------------------------------------------------
 load(file = "07_results/01_interim_results/model_outputs/several_predictors/model_1.RData")
 
-library(MCMCvis)
-MCMCtrace(object = fit_model_1, params = b[1], pdf = FALSE)
+MCMCsummary(object = fit_model_1, round = 2)
+MCMCtrace(object = fit_model_1, params = b, pdf = FALSE)
 ?MCMCtrace
 check_convergence(jags_output = get(paste0("fit_", model_code, "_", slope, mode)),
                   model_code = model_code, 

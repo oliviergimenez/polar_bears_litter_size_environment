@@ -263,79 +263,8 @@ Sys.setenv(LANG = "en")
 # }
 
 
-
-
-get_halfway_sea_ice_concentration <- function(daily_sea_ice) {
-  years <- seq(from = 1991, to = 2020, by = 1)
-  
-  # Find best window for max sea ice extent: Which 30-day interval has the highest
-  # sea ice concentration average over the ~30 years?
-  means_for_max <- c()
-  start_days_for_max <- c()
-  years_for_max <- c()
-  df_max <- c()
-  for (i in 2:length(daily_sea_ice)) {
-    days <- seq(from = 1, to = length(daily_sea_ice[[i]]), by = 1)
-    
-    # Maximum sea ice extent
-    means_for_max_i <- c()
-    start_days_for_max_i <- c()
-    for (j in 1:100) {
-      means_for_max_i <- c(means_for_max_i, mean(daily_sea_ice[[i]][j:(j+29)]))
-      start_days_for_max_i <- c(start_days_for_max_i, days[j])
-    }
-    year_for_max_i <- rep(years[i], times = length(means_for_max_i))
-    
-    df_i <- as.data.frame(cbind(year_for_max_i, start_days_for_max_i, means_for_max_i))
-    max_year_i <- df_i[max(df_i$means_for_max), ]
-    df_max <- rbind(df_max, max_year_i)
-  }
-  start_day_max <- round(mean(df_max$start_days_for_max_i))
-  
-  # Find best window for min sea ice extent: Which 30-day interval has the lowest
-  # sea ice concentration average over the ~30 years?
-  means_for_min <- c()
-  start_days_for_min <- c()
-  years_for_min <- c()
-  df_min <- c()
-  for (i in 2:length(daily_sea_ice)) {
-    days <- seq(from = 1, to = length(daily_sea_ice[[i]]), by = 1)
-    
-    # Maximum sea ice extent
-    means_for_min_i <- c()
-    start_days_for_min_i <- c()
-    for (j in 200:280) {
-      means_for_min_i <- c(means_for_min_i,
-                           mean(daily_sea_ice[[i]][j:(j+29)]))
-      start_days_for_min_i <- c(start_days_for_min_i, 
-                                days[j])
-    }
-    year_for_min_i <- rep(years[i], times = length(means_for_min_i))
-    
-    df_i <- as.data.frame(cbind(year_for_min_i, start_days_for_min_i, means_for_min_i))
-    min_year_i <- df_i[min(df_i$means_for_min), ]
-    df_min <- rbind(df_min, min_year_i)
-  }
-  start_day_min <- round(mean(df_min$start_days_for_min_i))
-  
-  
-  # Calculate the average yearly max and min sea ice extent
-  means_max <- c()
-  means_min <- c()
-  for (i in 2:length(daily_sea_ice)) {
-    means_max <- c(means_max, 
-                   mean(daily_sea_ice[[i]][start_day_max:(start_day_max+29)]))
-    means_min <- c(means_min, 
-                   mean(daily_sea_ice[[i]][start_day_min:(start_day_min+29)]))
-  }
-  max_sea_ice <- mean(means_max)
-  min_sea_ice <- mean(means_min)
-  
-  # Calculate the halfway value
-  halfway_sea_ice <- median(c(max_sea_ice, min_sea_ice))
-  return(halfway_sea_ice)
-}
-
+# Load the "get_haldway_sea_ice_concentration" function
+source("05_script/environmental_covariates/sea_ice_metrics_calc;ulation_functions.R")
 
 
 get_ice_free_days_in_row <- function(daily_sea_ice, days_in_a_row, area_considered) {

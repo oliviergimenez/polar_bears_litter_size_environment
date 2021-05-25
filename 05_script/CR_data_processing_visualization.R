@@ -41,6 +41,7 @@ capture_data_all <- capture_data_raw[, c(2:4, 6:7, 11:12, 28:29, 39:41, 45, 72:7
                 cub_status = `Cub status`,
                 cub_number = `Cub number`)
 
+
 # Process rows
 
 # 1. Only females with at least 1 cub

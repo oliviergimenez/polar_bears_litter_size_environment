@@ -64,9 +64,7 @@ interpolate <- function(daily_sea_ice, years) {
   return(daily_sea_ice)
 }
 
-
-
-
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 correct_SI_mistakes <- function(daily_sea_ice, years) {
   delta <- c()
   year <- c()
@@ -109,8 +107,7 @@ correct_SI_mistakes <- function(daily_sea_ice, years) {
   return(daily_sea_ice_corrected)
 }
 
-
-
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 correct_SI_mistakes_trial_update <- function(daily_sea_ice, years) {
   delta <- c()
   year <- c()
@@ -153,10 +150,10 @@ correct_SI_mistakes_trial_update <- function(daily_sea_ice, years) {
         ID_mistakes <- c(ID_mistakes, rep(i, times = j))
         mistake_year_i <- mistake_year_i[-c(1:j),]
         remaining_rows <- nrow(mistake_year_i)
-
+        
       }
     }
-
+    
   }
   wrong_measures <- wrong_measures %>%
     mutate(ID_mistakes = wrong_measures)
@@ -179,11 +176,12 @@ correct_SI_mistakes_trial_update <- function(daily_sea_ice, years) {
   return(daily_sea_ice_corrected)
 }
 
-
-
-
-get_SI_retreat_advance_date <- function(daily_sea_ice, years) {
-  # Find best window for max sea ice extent
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+get_halfway_sea_ice_concentration <- function(daily_sea_ice) {
+  years <- seq(from = 1991, to = 2020, by = 1)
+  
+  # Find best window for max sea ice extent: Which 30-day interval has the highest
+  # sea ice concentration average over the ~30 years?
   means_for_max <- c()
   start_days_for_max <- c()
   years_for_max <- c()
@@ -194,19 +192,20 @@ get_SI_retreat_advance_date <- function(daily_sea_ice, years) {
     # Maximum sea ice extent
     means_for_max_i <- c()
     start_days_for_max_i <- c()
-    for (j in 1:175) {
-      means_for_max_i <- c(means_for_max_i, mean(daily_sea_ice[[i]][j:(j+29)])) # For each starting date, calculate the 30-day average
+    for (j in 1:100) {
+      means_for_max_i <- c(means_for_max_i, mean(daily_sea_ice[[i]][j:(j+29)]))
       start_days_for_max_i <- c(start_days_for_max_i, days[j])
     }
     year_for_max_i <- rep(years[i], times = length(means_for_max_i))
     
     df_i <- as.data.frame(cbind(year_for_max_i, start_days_for_max_i, means_for_max_i))
-    max_year_i <- df_i[df_i$means_for_max_i == max(df_i$means_for_max_i), ] # Keep only the row with the highest value
+    max_year_i <- df_i[max(df_i$means_for_max), ]
     df_max <- rbind(df_max, max_year_i)
   }
   start_day_max <- round(mean(df_max$start_days_for_max_i))
   
-  # Find best window for min sea ice extent
+  # Find best window for min sea ice extent: Which 30-day interval has the lowest
+  # sea ice concentration average over the ~30 years?
   means_for_min <- c()
   start_days_for_min <- c()
   years_for_min <- c()
@@ -214,72 +213,98 @@ get_SI_retreat_advance_date <- function(daily_sea_ice, years) {
   for (i in 2:length(daily_sea_ice)) {
     days <- seq(from = 1, to = length(daily_sea_ice[[i]]), by = 1)
     
-    # minimum sea ice extent
+    # Maximum sea ice extent
     means_for_min_i <- c()
     start_days_for_min_i <- c()
-    for (j in 175:300) {
-      means_for_min_i <- c(means_for_min_i, mean(daily_sea_ice[[i]][j:(j+29)])) # For each starting date, calculate the 30-day average
-      start_days_for_min_i <- c(start_days_for_min_i, days[j])
+    for (j in 200:280) {
+      means_for_min_i <- c(means_for_min_i,
+                           mean(daily_sea_ice[[i]][j:(j+29)]))
+      start_days_for_min_i <- c(start_days_for_min_i, 
+                                days[j])
     }
     year_for_min_i <- rep(years[i], times = length(means_for_min_i))
     
     df_i <- as.data.frame(cbind(year_for_min_i, start_days_for_min_i, means_for_min_i))
-    min_year_i <- df_i[df_i$means_for_min_i == min(df_i$means_for_min_i), ] # keep only the row with the lowest values
+    min_year_i <- df_i[min(df_i$means_for_min), ]
     df_min <- rbind(df_min, min_year_i)
   }
-  
   start_day_min <- round(mean(df_min$start_days_for_min_i))
+  
   
   # Calculate the average yearly max and min sea ice extent
   means_max <- c()
   means_min <- c()
   for (i in 2:length(daily_sea_ice)) {
     means_max <- c(means_max, 
-                   mean(daily_sea_ice[[i]][start_day_max:(start_day_max+30)]))
+                   mean(daily_sea_ice[[i]][start_day_max:(start_day_max+29)]))
     means_min <- c(means_min, 
-                   mean(daily_sea_ice[[i]][start_day_min:(start_day_min+30)]))
+                   mean(daily_sea_ice[[i]][start_day_min:(start_day_min+29)]))
   }
   max_sea_ice <- mean(means_max)
   min_sea_ice <- mean(means_min)
   
   # Calculate the halfway value
   halfway_sea_ice <- median(c(max_sea_ice, min_sea_ice))
-  print(halfway_sea_ice)
+  return(halfway_sea_ice)
+}
+
+
+
+
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+get_SI_retreat_advance_date <- function(daily_sea_ice, years, days_in_a_row) {
+  years <- seq(from = 1991, to = 2020, by = 1)
   
-  # Retrive the day number of retreat/advance for each year
+  # Calculate the halfway sea ice concentration
+  halfway_sea_ice <- get_halfway_sea_ice_concentration(daily_sea_ice)
+  
+  ### Retrieve the day number of the retreat date for each date
+  # First: calculate the number of days out of days_in_a_row with ice < halfway
   retreat_days <- c()
   year <- c()
   for (i in 2:length(daily_sea_ice)) {
     year <- c(year, years[i])
-    five_day_SI <- c()
+    days_SI <- c()
     for (j in 1:250) {
-      five_day_SI <- c( five_day_SI,
-                        sum(daily_sea_ice[[i]][seq(from = j, to = j+4, by = 1)] < halfway_sea_ice) )
+      days_SI <- c( days_SI,
+                    sum(daily_sea_ice[[i]][seq(from = j, to = j + days_in_a_row - 1, by = 1)] < halfway_sea_ice) )
       
     }
+    # Second: starting from a date with many ice-free days in a row, go back in time 
+    # day by day until the number of ice free days out of days_in_a_row is lower than 
+    # the maximum (i.e. lower than days_in_a_row).
     j <- 250
-    while(five_day_SI[j] == 5) {
+    while(days_SI[j] == days_in_a_row) {
       j <- j - 1
     }
-    retreat_days <- c(retreat_days, j+1)
+    retreat_days <- c(retreat_days, j + 1)
   }
   retreat <- data.frame(year = year,
                         day_retreat = retreat_days)
   
+  
+  ### Retrieve the day number of the retreat date for each date
+  # First: calculate the number of days out of days_in_a_row with ice > halfway
   advance_days <- c()
   year <- c()
   for (i in 2:( length(daily_sea_ice) - 1)) {
+    # Here we fuse days from year i to days from year i+1 because sea ice advance 
+    # sometimes occur in early year i + 1
     daily_sea_ice_i <- c(daily_sea_ice[[i]][seq(from = 250, to = length(daily_sea_ice[[i]]), by = 1)],
                          daily_sea_ice[[i+1]][seq(from = 1, to = 135, by = 1)])
     year <- c(year, years[i])
-    five_day_SI <- c()
+    days_SI <- c()
     for (j in 1:length(daily_sea_ice_i)) {
-      five_day_SI <- c( five_day_SI,
-                        sum(daily_sea_ice_i[seq(from = j, to = j+4, by = 1)] > halfway_sea_ice) )
+      days_SI <- c( days_SI,
+                    sum(daily_sea_ice_i[seq(from = j, to = j + days_in_a_row - 1, by = 1)] > halfway_sea_ice) )
       
     }
+    # Second: starting from a date with many ice-free days in a row (day 250), go  
+    # forward in time day by day until the number of ice-covered days out of 
+    # days_in_a_row is reaches the maximum value it can take (i.e. days_in_a_row).
     j <- 1
-    while(five_day_SI[j] < 5) {
+    while(days_SI[j] < days_in_a_row) {
       j <- j + 1
     }
     advance_days <- c(advance_days, j + 249)
@@ -298,21 +323,22 @@ get_SI_retreat_advance_date <- function(daily_sea_ice, years) {
 
 
 
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
-get_SI_retreat_advance_date_any_threshold <- function(daily_sea_ice, years, threshold) {
-  # Retrive the day number of retreat/advance for each year
+get_SI_retreat_advance_date_any_threshold <- function(daily_sea_ice, years, days_in_a_row, threshold) {
+  # Retrieve the day number of retreat/advance for each year
   retreat_days <- c()
   year <- c()
   for (i in 2:length(daily_sea_ice)) {
     year <- c(year, years[i])
-    five_day_SI <- c()
+    days_SI <- c()
     for (j in 1:250) {
-      five_day_SI <- c( five_day_SI,
-                        sum(daily_sea_ice[[i]][seq(from = j, to = j+4, by = 1)] < threshold) )
+      days_SI <- c( days_SI,
+                    sum(daily_sea_ice[[i]][seq(from = j, to = j + days_in_a_row - 1, by = 1)] < threshold) )
       
     }
     j <- 250
-    while(five_day_SI[j] == 5) {
+    while(days_SI[j] == days_in_a_row) {
       j <- j - 1
     }
     retreat_days <- c(retreat_days, j+1)
@@ -326,14 +352,14 @@ get_SI_retreat_advance_date_any_threshold <- function(daily_sea_ice, years, thre
     daily_sea_ice_i <- c(daily_sea_ice[[i]][seq(from = 250, to = length(daily_sea_ice[[i]]), by = 1)],
                          daily_sea_ice[[i+1]][seq(from = 1, to = 135, by = 1)])
     year <- c(year, years[i])
-    five_day_SI <- c()
+    days_SI <- c()
     for (j in 1:length(daily_sea_ice_i)) {
-      five_day_SI <- c( five_day_SI,
-                        sum(daily_sea_ice_i[seq(from = j, to = j+4, by = 1)] > threshold) )
+      days_SI <- c( days_SI,
+                    sum(daily_sea_ice_i[seq(from = j, to = j + days_in_a_row - 1, by = 1)] > threshold) )
       
     }
     j <- 1
-    while(five_day_SI[j] < 5) {
+    while(days_SI[j] < days_in_a_row) {
       j <- j + 1
     }
     advance_days <- c(advance_days, j + 249)

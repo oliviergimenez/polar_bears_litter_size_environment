@@ -221,7 +221,8 @@ years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_A <- get_SI_retreat_advance_date(daily_sea_ice_A_3, 
-                                                         years)
+                                                         years,
+                                                         days_in_a_row = 5)
 # Save
 write_csv(SI_retreat_advance_date_A, 
           "06_processed_data/sea_ice_data/retreat_advance_ice_free_days_A.csv")
@@ -494,7 +495,8 @@ years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
 SI_retreat_advance_date_B <- get_SI_retreat_advance_date(daily_sea_ice_B_3, 
-                                                         years)
+                                                         years,
+                                                         days_in_a_row = 5)
 
 write_csv(SI_retreat_advance_date_B, 
           "06_processed_data/sea_ice_data/retreat_advance_ice_free_days_B.csv")
@@ -695,7 +697,8 @@ years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_C <- get_SI_retreat_advance_date(daily_sea_ice_C_3, 
-                                                         years)
+                                                         years,
+                                                         days_in_a_row = 5)
 # Save
 write_csv(SI_retreat_advance_date_C, 
           "06_processed_data/sea_ice_data/retreat_advance_ice_free_days_C.csv")
@@ -920,7 +923,8 @@ years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_D <- get_SI_retreat_advance_date(daily_sea_ice_D_3, 
-                                                         years)
+                                                         years,
+                                                         days_in_a_row = 5)
 # Save
 write_csv(SI_retreat_advance_date_D, 
           "06_processed_data/sea_ice_data/retreat_advance_ice_free_days_D.csv")
@@ -1096,6 +1100,7 @@ daily_sea_ice_E_2 <- interpolate(daily_sea_ice_E, years)
 save(daily_sea_ice_E_2,
      file = "06_processed_data/sea_ice_data/daily_sea_ice_E_buffer_pelagic_area_interpolated.RData")
 
+
 # ~ 3. Correct wrong values ----------------------------------------------------
 
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
@@ -1146,7 +1151,8 @@ years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_E <- get_SI_retreat_advance_date(daily_sea_ice_E_3, 
-                                                         years)
+                                                         years,
+                                                         days_in_a_row = 5)
 # Save
 write_csv(SI_retreat_advance_date_E, 
           "06_processed_data/sea_ice_data/retreat_advance_ice_free_days_E.csv")
@@ -1214,6 +1220,12 @@ ggplot() +
        fill = "Sea ice \ncover")
 
 ggsave("10_meetings/2021-05-06 Meeting with Sarah/area E.svg")
+
+
+
+
+
+
 # F. Buffer around Svalabrd with a 60% sea ice concentration threshold ============
 
 # ~ 4. Calculate sea ice retreat and advance dates -----------------------------
