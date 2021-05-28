@@ -11,6 +11,7 @@ library(viridis)
 library(ggmcmc)
 library(gridExtra)
 library(nimble)
+library(cowplot)
 Sys.setenv(LANG = "en")
 
 # READY VARIABLES ===========================================================
@@ -160,9 +161,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -281,8 +282,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -399,8 +401,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -516,9 +519,11 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, toupper(mode), ".RData"))
 
+
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -639,9 +644,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -756,8 +761,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -873,8 +879,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -997,9 +1004,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------

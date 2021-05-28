@@ -12,6 +12,7 @@ library(viridis)
 library(ggmcmc)
 library(gridExtra)
 library(MCMCvis)
+library(cowplot)
 Sys.setenv(LANG = "en")
 
 
@@ -60,14 +61,14 @@ size_s2 <- size_s^2
 
 
 # Age (in 3 categories)
-age <- as.numeric(data_model$age_for_analyses)
+{age <- as.numeric(data_model$age_for_analyses)
 age_factor <- as.factor(ifelse (age < 9, "b. young", 
                                 ifelse(age > 15, "c. old", "a. prime_age")))
 relevel(age_factor, ref = "a. prime_age")
 
 age_old <- ifelse (age > 15, 1, 0)
 age_young <- ifelse (age < 9, 1, 0)
-
+}
 
 # Other variables +++++++++++++++++++++++++++++++
 
@@ -171,23 +172,36 @@ fit_model_1$WAIC
 save(fit_model_1, 
      file = "07_results/01_interim_results/model_outputs/several_predictors/model_1.RData")
 
+
 # ~~~ b. Check convergence -----------------------------------------------------
 load(file = "07_results/01_interim_results/model_outputs/several_predictors/model_1.RData")
+params.plot <- c("b.1.", "b.2.", "b.3.", "b.4.", "b.5.", "b.6.", "b.7.", "b.8.", "b.9.", 
+                 "b.10.", "sigma1")
 
-MCMCsummary(object = fit_model_1, round = 2)
-MCMCtrace(object = fit_model_1, params = b, pdf = FALSE)
-?MCMCtrace
-check_convergence(jags_output = get(paste0("fit_", model_code, "_", slope, mode)),
-                  model_code = model_code, 
-                  slope = slope, mode = mode)
+# Run the function
+diagnostic_plot <- check_convergence_several_predictors(params.plot = params.plot, 
+                                                        nimble_output = fit_model_1)
+diagnostic_plot
 
+# Save the plot
+nrows = length(params.plot)
+save_plot(filename = "07_results/01_interim_results/model_outputs/several_predictors/graphs/diagnostic_plots/fit_model_1.png",
+          plot = diagnostic_plot,
+          ncol = 3,
+          nrow = 1,
+          base_width = 3,
+          base_height = nrows * 1.1)
+
+rm(diagnostic_plot)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = "07_results/01_interim_results/model_outputs/several_predictors/model_1.RData")
 
-res <- rbind(fit_model_1$samples$chain1,
-             fit_model_1$samples$chain2)
+res <- rbind(fit_model_1[["samples"]][["chain1"]][seq(1, N, by = 4), 
+                                                            c(1:10)],
+             fit_model_1[["samples"]][["chain2"]][seq(1, N, by = 4), 
+                                                            c(1:10)])
 b1cub <- res[, c(1:9)]
 b2_3cub <- res[, c(10, 2:9)] 
 
@@ -208,8 +222,10 @@ q0cub_var1 <- q1cub_var1 <- q2cub_var1 <- q3cub_var1 <- matrix(data = NA,
                                                                nrow = dim(res)[1], 
                                                                ncol = lengthgrid)
 
+
 # ~~~~~~~~~ Ages -----------------------------------
 # Prime-aged ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+start <- Sys.time() 
 for (i in 1:lengthgrid) {
   for (j in 1:dim(res)[1]) {
     q0cub[j, i] <- exp(0)
@@ -227,6 +243,9 @@ for (i in 1:lengthgrid) {
                            b2_3cub[j, 8] * 0 * mean(day_s) + b2_3cub[j, 9] * 0 * mean(day_s))	
   }
 }
+end <- Sys.time() 
+end - start
+
 p0cub <- p1cub <- p2_3cub <- matrix(NA, dim(res)[1], lengthgrid)
 for (i in 1:lengthgrid){
   for (j in 1:dim(res)[1]){
@@ -336,6 +355,7 @@ for (i in 1:lengthgrid) {
                            b2_3cub[j, 8] * 0 * mean(day_s) + b2_3cub[j, 9] * 1 * mean(day_s))	
   }
 }
+
 p0cub <- p1cub <- p2_3cub <- matrix(NA, dim(res)[1], lengthgrid)
 for (i in 1:lengthgrid){
   for (j in 1:dim(res)[1]){
@@ -696,7 +716,7 @@ df.for.plot.early <- data.frame(var = grid,
          day = "early")
 
 
-# Large ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+# Late season ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 lst_decile <- quantile(x = day_s, # = day 116 of the year
                        probs = 0.90, 
                        na.rm = TRUE)
@@ -752,14 +772,14 @@ df.for.plot.late <- data.frame(var = grid,
 
 
 
-df.for.plot.size <- rbind(df.for.plot.small, df.for.plot.medium.sized, df.for.plot.large) %>%
-  mutate(size = factor(size, levels = c("small", "medium", "large")))
+df.for.plot.day.capture <- rbind(df.for.plot.early, df.for.plot.mid.season, df.for.plot.late) %>%
+  mutate(day = factor(day, levels = c("early", "mid season", "late")))
 
-write_csv(df.for.plot.size, 
-          "07_results/01_interim_results/model_outputs/several_predictors/graphs/model_1_ice_free_days_facet_size.csv")
-df.for.plot.size <- read_csv("07_results/01_interim_results/model_outputs/several_predictors/graphs/model_1_ice_free_days_facet_size.csv")
+write_csv(df.for.plot.day.capture, 
+          "07_results/01_interim_results/model_outputs/several_predictors/graphs/model_1_ice_free_days_facet_day.csv")
+df.for.plot.day.capture <- read_csv("07_results/01_interim_results/model_outputs/several_predictors/graphs/model_1_ice_free_days_facet_day.csv")
 
-ggplot(data = df.for.plot.size, 
+ggplot(data = df.for.plot.day.capture, 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -772,14 +792,317 @@ ggplot(data = df.for.plot.size,
        y = "Probability", 
        color = "",
        linetype = "") +
-  facet_wrap(~ size)
+  facet_wrap(~ day)
 
-ggsave(filename = "07_results/01_interim_results/model_outputs/several_predictors/graphs/model_1_ice_free_days_facet size.png",
+ggsave(filename = "07_results/01_interim_results/model_outputs/several_predictors/graphs/model_1_ice_free_days_facet day.png",
        width = 14, height = 6)
 
 
 
 
+
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+# 2. Previous year ice-free days * day capture + individual variables: common slopes ---------
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = length(levels(year)),
+                     ice_free_days_previous_s = as.numeric(ice_free_days_previous_s), 
+                     size_s = as.numeric(size_s), size_s2 = as.numeric(size_s2), 
+                     age_young = as.factor(age_young), age_old = as.factor(age_old), 
+                     day_s = as.numeric(day_s))
+
+params <- c("b", "sigma1" ,"eps1")
+
+# Generate initial values
+temp.dat <- data.frame(y = y, 
+                       age_factor = age_factor,
+                       size_s = size_s, 
+                       size_s2 = size_s2,
+                       day_s = day_s,
+                       ice_free_days_previous_s = ice_free_days_previous_s)
+
+temp.dat$yfac <- as.factor(temp.dat$y) # Ajout de Y en facteur
+mnl.dat <- mlogit.data(temp.dat, varying = NULL, choice = "yfac", shape = "wide") 
+mlogit.mod <- mlogit(yfac ~ 1| (ice_free_days_previous_s + age_factor) * day_s + size_s + size_s2, 
+                     data = mnl.dat, 
+                     reflevel = "0")
+
+coefs <- as.vector(summary(mlogit.mod)$coefficients)
+
+
+inits <- function() list(b = coefs[c(1, 3, 5, 7, 9, 11, 13, 17, 19, 15, 2)] + round(runif(n = 1, -1, 1))/10, 
+                         sigma1 = runif(1))
+
+
+# ~~~ a. Run the model ---------------------------------------------------------
+
+start <- Sys.time()
+fit_model_2 <- nimbleMCMC(code = model_2,     # model code  
+                          data = dat,                                   
+                          constants = my.constants,        
+                          inits = inits,          
+                          monitors = params,   # parameters to monitor
+                          thin = 10,
+                          niter = 100000,                  # nb iterations
+                          nburnin = 20000,              # length of the burn-in
+                          nchains = 2,
+                          summary = TRUE,
+                          WAIC = TRUE)
+end <- Sys.time()
+end - start # 24min
+
+fit_model_2$WAIC
+# 1077.925
+save(fit_model_2, 
+     file = "07_results/01_interim_results/model_outputs/several_predictors/model_2.RData")
+
+
+# ~~~ b. Check convergence -----------------------------------------------------
+load(file = "07_results/01_interim_results/model_outputs/several_predictors/model_2.RData")
+params.plot <- c("b.1.", "b.2.", "b.3.", "b.4.", "b.5.", "b.6.", "b.7.", "b.8.", "b.9.", 
+                  "b.10.", "b.11.", "sigma1")
+
+# Run the function
+diagnostic_plot <- check_convergence_several_predictors(params.plot = params.plot, 
+                                                        nimble_output = fit_model_2)
+diagnostic_plot
+
+# Save the plot
+nrows = length(params.plot)
+save_plot(filename = "07_results/01_interim_results/model_outputs/several_predictors/graphs/diagnostic_plots/fit_model_2.png",
+          plot = diagnostic_plot,
+          ncol = 3,
+          nrow = 1,
+          base_width = 3,
+          base_height = nrows * 1.1)
+
+rm(diagnostic_plot)
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+
+load(file = "07_results/01_interim_results/model_outputs/several_predictors/model_2.RData")
+
+res <- rbind(fit_model_2[["samples"]][["chain1"]][seq(1, N, by = 4), 
+                                                  c(1:11)],
+             fit_model_2[["samples"]][["chain2"]][seq(1, N, by = 4), 
+                                                  c(1:11)])
+b1cub <- res[, c(1:10)]
+b2_3cub <- res[, c(11, 2:10)] 
+# ~~~~~~ Sea ice ---------------------------------------------------
+range <- range(ice_free_days_previous_s)
+
+lengthgrid <- 100
+grid_scaled <- seq(from = range[1] - 0.1*(range[2] - range[1]), 
+                   to = range[2] + 0.1*(range[2] - range[1]), 
+                   length = lengthgrid)
+
+grid <- grid_scaled * sd(ice_free_days_previous) + mean(ice_free_days_previous)
+
+q0cub <- q1cub <- q2_3cub <- matrix(data = NA, 
+                                    nrow = dim(res)[1], 
+                                    ncol = lengthgrid)
+q0cub_var1 <- q1cub_var1 <- q2cub_var1 <- q3cub_var1 <- matrix(data = NA, 
+                                                               nrow = dim(res)[1], 
+                                                               ncol = lengthgrid)
+
+# ~~~~~~~~~ Day of capture -----------------------------------
+
+# Median day of capture ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+for (i in 1:lengthgrid) {
+  for (j in 1:dim(res)[1]) {
+    q0cub[j, i] <- exp(0)
+    q1cub[j, i] <- exp(b1cub[j, 1] + 
+                         b1cub[j, 2] * grid_scaled[i] +
+                         b1cub[j, 3] * mean(size_s) + b1cub[j, 4] * mean(size_s)^2 +
+                         # b1cub[j, 5] * 0 + b1cub[j, 5] * 0 +
+                         b1cub[j, 7] * median(day_s) +
+                         # b1cub[j, 8] * 0 * median(day_s) + b1cub[j, 9] * 0 * median(day_s)	+
+                         b1cub[j, 10] * grid_scaled[i] * median(day_s))
+    q2_3cub[j, i] <- exp(b2_3cub[j, 1] + 
+                           b2_3cub[j, 2] * grid_scaled[i] +
+                           b2_3cub[j, 3] * mean(size_s) + b2_3cub[j, 4] * mean(size_s)^2 +
+                           # b2_3cub[j, 5] * 0 + b2_3cub[j, 5] * 0 +
+                           b2_3cub[j, 7] * median(day_s) +
+                           # b2_3cub[j, 8] * 0 * median(day_s) + b2_3cub[j, 9] * 0 * median(day_s) +
+                           b2_3cub[j, 10] * grid_scaled[i] * median(day_s))	
+  } 
+}
+p0cub <- p1cub <- p2_3cub <- matrix(NA, dim(res)[1], lengthgrid)
+for (i in 1:lengthgrid){
+  for (j in 1:dim(res)[1]){
+    norm <- (q0cub[j, i] + q1cub[j, i] + q2_3cub[j, i])
+    p0cub[j, i] <- q0cub[j, i]/norm
+    p1cub[j, i] <- q1cub[j, i]/norm
+    p2_3cub[j, i] <- q2_3cub[j, i]/norm
+  }
+}
+
+df.for.plot.mid.season <- data.frame(var = grid,
+                                     mean_p_0_cub = apply(p0cub, 2, mean),
+                                     mean_p_1_cub = apply(p1cub, 2, mean),
+                                     mean_p_2_3_cub = apply(p2_3cub, 2, mean),
+                                     ci_p_0_cub_2.5 = apply(p0cub, 2, quantile, probs = 0.025),
+                                     ci_p_0_cub_97.5 = apply(p0cub, 2, quantile, probs = 0.975),
+                                     ci_p_1_cub_2.5 = apply(p1cub, 2, quantile, probs = 0.025),
+                                     ci_p_1_cub_97.5 = apply(p1cub, 2, quantile, probs = 0.975),
+                                     ci_p_2_3_cub_2.5 = apply(p2_3cub, 2, quantile, probs = 0.025),
+                                     ci_p_2_3_cub_97.5 = apply(p2_3cub, 2, quantile, probs = 0.975)) %>%
+  pivot_longer(cols = c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub",
+                        "ci_p_0_cub_2.5", "ci_p_0_cub_97.5", 
+                        "ci_p_1_cub_2.5", "ci_p_1_cub_97.5", 
+                        "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5")) %>%
+  mutate(cub_number = ifelse(name %in% c("mean_p_0_cub", "ci_p_0_cub_2.5", "ci_p_0_cub_97.5"), 0, 
+                             ifelse(name %in% c("mean_p_1_cub", "ci_p_1_cub_2.5", "ci_p_1_cub_97.5"), 1, 
+                                    ifelse(name %in% c("mean_p_2_3_cub", "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5"), 2, 10))),
+         type = ifelse(name %in% c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub"), "mean", 
+                       "credible_interval"),
+         day = "mid season")
+
+
+# Early season ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+fst_decile <- quantile(x = day_s, # = day 90 of the year
+                       probs = 0.10, 
+                       na.rm = TRUE)
+
+for (i in 1:lengthgrid) {
+  for (j in 1:dim(res)[1]) {
+    q0cub[j, i] <- exp(0)
+    q1cub[j, i] <- exp(b1cub[j, 1] + 
+                         b1cub[j, 2] * grid_scaled[i] +
+                         b1cub[j, 3] * mean(size_s) + b1cub[j, 4] * mean(size_s)^2 +
+                         # b1cub[j, 5] * 0 + b1cub[j, 5] * 0 +
+                         b1cub[j, 7] * fst_decile +
+                         # b1cub[j, 8] * 0 * fst_decile + b1cub[j, 9] * 0 * fst_decile +
+                         b1cub[j, 10] * grid_scaled[i] * fst_decile)	
+    q2_3cub[j, i] <- exp(b2_3cub[j, 1] + 
+                           b2_3cub[j, 2] * grid_scaled[i] +
+                           b2_3cub[j, 3] * mean(size_s) + b2_3cub[j, 4] * mean(size_s)^2 +
+                           # b2_3cub[j, 5] * 0 + b2_3cub[j, 5] * 0 +
+                           b2_3cub[j, 7] * fst_decile +
+                           # b2_3cub[j, 8] * 0 * fst_decile + b2_3cub[j, 9] * 0 * fst_decile +
+                           b2_3cub[j, 10] * grid_scaled[i] * fst_decile)	
+  }
+}
+p0cub <- p1cub <- p2_3cub <- matrix(NA, dim(res)[1], lengthgrid)
+for (i in 1:lengthgrid){
+  for (j in 1:dim(res)[1]){
+    norm <- (q0cub[j, i] + q1cub[j, i] + q2_3cub[j, i])
+    p0cub[j, i] <- q0cub[j, i]/norm
+    p1cub[j, i] <- q1cub[j, i]/norm
+    p2_3cub[j, i] <- q2_3cub[j, i]/norm
+  }
+}
+
+
+df.for.plot.early <- data.frame(var = grid,
+                                mean_p_0_cub = apply(p0cub, 2, mean),
+                                mean_p_1_cub = apply(p1cub, 2, mean),
+                                mean_p_2_3_cub = apply(p2_3cub, 2, mean),
+                                ci_p_0_cub_2.5 = apply(p0cub, 2, quantile, probs = 0.025),
+                                ci_p_0_cub_97.5 = apply(p0cub, 2, quantile, probs = 0.975),
+                                ci_p_1_cub_2.5 = apply(p1cub, 2, quantile, probs = 0.025),
+                                ci_p_1_cub_97.5 = apply(p1cub, 2, quantile, probs = 0.975),
+                                ci_p_2_3_cub_2.5 = apply(p2_3cub, 2, quantile, probs = 0.025),
+                                ci_p_2_3_cub_97.5 = apply(p2_3cub, 2, quantile, probs = 0.975)) %>%
+  pivot_longer(cols = c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub",
+                        "ci_p_0_cub_2.5", "ci_p_0_cub_97.5", 
+                        "ci_p_1_cub_2.5", "ci_p_1_cub_97.5", 
+                        "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5")) %>%
+  mutate(cub_number = ifelse(name %in% c("mean_p_0_cub", "ci_p_0_cub_2.5", "ci_p_0_cub_97.5"), 0, 
+                             ifelse(name %in% c("mean_p_1_cub", "ci_p_1_cub_2.5", "ci_p_1_cub_97.5"), 1, 
+                                    ifelse(name %in% c("mean_p_2_3_cub", "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5"), 2, 10))),
+         type = ifelse(name %in% c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub"), "mean", 
+                       "credible_interval"),
+         day = "early")
+
+
+# Late season ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+lst_decile <- quantile(x = day_s, # = day 116 of the year
+                       probs = 0.90, 
+                       na.rm = TRUE)
+
+
+for (i in 1:lengthgrid) {
+  for (j in 1:dim(res)[1]) {
+    q0cub[j, i] <- exp(0)
+    q1cub[j, i] <- exp(b1cub[j, 1] + 
+                         b1cub[j, 2] * grid_scaled[i] +
+                         b1cub[j, 3] * mean(size_s) + b1cub[j, 4] * mean(size_s)^2 +
+                         # b1cub[j, 5] * 0 + b1cub[j, 5] * 0 +
+                         b1cub[j, 7] * lst_decile +
+                         # b1cub[j, 8] * 0 * lst_decile + b1cub[j, 9] * 0 * lst_decile +
+                         b1cub[j, 10] * 0 * grid_scaled[i] * lst_decile)	
+    q2_3cub[j, i] <- exp(b2_3cub[j, 1] + 
+                           b2_3cub[j, 2] * grid_scaled[i] +
+                           b2_3cub[j, 3] * mean(size_s) + b2_3cub[j, 4] * mean(size_s)^2 +
+                           # b2_3cub[j, 5] * 0 + b2_3cub[j, 5] * 0 +
+                           b2_3cub[j, 7] * lst_decile +
+                           # b2_3cub[j, 8] * 0 * lst_decile + b2_3cub[j, 9] * 0 * lst_decile +
+                           b2_3cub[j, 10] * grid_scaled[i] * lst_decile)
+  }
+}
+p0cub <- p1cub <- p2_3cub <- matrix(NA, dim(res)[1], lengthgrid)
+for (i in 1:lengthgrid){
+  for (j in 1:dim(res)[1]){
+    norm <- (q0cub[j, i] + q1cub[j, i] + q2_3cub[j, i])
+    p0cub[j, i] <- q0cub[j, i]/norm
+    p1cub[j, i] <- q1cub[j, i]/norm
+    p2_3cub[j, i] <- q2_3cub[j, i]/norm
+  }
+}
+
+df.for.plot.late <- data.frame(var = grid,
+                               mean_p_0_cub = apply(p0cub, 2, mean),
+                               mean_p_1_cub = apply(p1cub, 2, mean),
+                               mean_p_2_3_cub = apply(p2_3cub, 2, mean),
+                               ci_p_0_cub_2.5 = apply(p0cub, 2, quantile, probs = 0.025),
+                               ci_p_0_cub_97.5 = apply(p0cub, 2, quantile, probs = 0.975),
+                               ci_p_1_cub_2.5 = apply(p1cub, 2, quantile, probs = 0.025),
+                               ci_p_1_cub_97.5 = apply(p1cub, 2, quantile, probs = 0.975),
+                               ci_p_2_3_cub_2.5 = apply(p2_3cub, 2, quantile, probs = 0.025),
+                               ci_p_2_3_cub_97.5 = apply(p2_3cub, 2, quantile, probs = 0.975)) %>%
+  pivot_longer(cols = c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub",
+                        "ci_p_0_cub_2.5", "ci_p_0_cub_97.5", 
+                        "ci_p_1_cub_2.5", "ci_p_1_cub_97.5", 
+                        "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5")) %>%
+  mutate(cub_number = ifelse(name %in% c("mean_p_0_cub", "ci_p_0_cub_2.5", "ci_p_0_cub_97.5"), 0, 
+                             ifelse(name %in% c("mean_p_1_cub", "ci_p_1_cub_2.5", "ci_p_1_cub_97.5"), 1, 
+                                    ifelse(name %in% c("mean_p_2_3_cub", "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5"), 2, 10))),
+         type = ifelse(name %in% c("mean_p_0_cub", "mean_p_1_cub", "mean_p_2_3_cub"), "mean", 
+                       "credible_interval"),
+         day = "late")
+
+
+
+df.for.plot.day.capture <- rbind(df.for.plot.early, df.for.plot.mid.season, df.for.plot.late) %>%
+  mutate(day = factor(day, levels = c("early", "mid season", "late")))
+
+write_csv(df.for.plot.day.capture, 
+          "07_results/01_interim_results/model_outputs/several_predictors/graphs/model_2_ice_free_days_facet_day.csv")
+df.for.plot.day.capture <- read_csv("07_results/01_interim_results/model_outputs/several_predictors/graphs/model_2_ice_free_days_facet_day.csv")
+
+ggplot(data = df.for.plot.day.capture, 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = c("no cubs", "1 cub", "2-3 cubs")) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = "Number of ice-free days during the previous year",
+       y = "Probability", 
+       color = "",
+       linetype = "") +
+  facet_wrap(~ day)
+
+ggsave(filename = "07_results/01_interim_results/model_outputs/several_predictors/graphs/model_2_ice_free_days_facet day.png",
+       width = 14, height = 6)
 
 
 

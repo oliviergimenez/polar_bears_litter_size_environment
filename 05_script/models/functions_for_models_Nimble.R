@@ -86,6 +86,186 @@ get_coefs_and_params <- function(y, var_scaled, effect, mode) {
 
 
 
+# check_convergence <- function(params, effect, model_code) {
+#   # Load file
+#   load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+#                      model_code, "_effect_", effect, ".RData"))
+#   nimble_output <- get(paste0("fit_", model_code, "_effect_", effect))
+#   # rm(list(get(paste0("fit_", model_code, "_effect_", effect))))
+#   print(paste0("check convergence of model_", model_code, "_effect_", effect))
+#   
+#   # Process Nimble output into dataframe
+#   chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
+#     select(params[-length(params)]) %>%
+#     mutate(chain = "chain 1",
+#            iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
+#   chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
+#     select(params[-length(params)]) %>%
+#     mutate(chain = "chain 2",
+#            iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
+#   chains <- rbind(chain1, chain2)
+#   
+#   
+#   # Plot
+#   if (effect %in% c("1c_VS_0c", "common")) {
+#     nrows <- 4
+#     
+#     trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
+#       geom_line() +
+#       labs(y = "a0")
+#     density_a0 <- ggplot(data = chains, 
+#                          aes(x = a0, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "a0") +
+#       theme(legend.position = "none")
+#     
+#     trace_a1 <- ggplot(data = chains, aes(x = iteration, y = a1, color = chain)) +
+#       geom_line() +
+#       labs(y = "a1")
+#     density_a1 <- ggplot(data = chains, 
+#                          aes(x = a1, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "a1") +
+#       theme(legend.position = "none")
+#     
+#     trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
+#       geom_line() +
+#       labs(y = "b0")
+#     density_b0 <- ggplot(data = chains, 
+#                          aes(x = b0, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "b0") +
+#       theme(legend.position = "none")
+#     
+#     trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
+#       geom_line() +
+#       labs(y = "sigma1")
+#     density_sigma1 <- ggplot(data = chains, 
+#                              aes(x = sigma1, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "sigma1") +
+#       theme(legend.position = "none")
+#     
+#     diagnostic_plot <- plot_grid(trace_a0, density_a0,
+#               trace_a1, density_a1,
+#               trace_b0, density_b0,
+#               trace_sigma1, density_sigma1,
+#               ncol = 2, nrow = nrows)
+#   } 
+#   if (effect == "2_3c_VS_0c") {
+#     nrows <- 4
+#     
+#     trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
+#       geom_line() +
+#       labs(y = "a0")
+#     density_a0 <- ggplot(data = chains, 
+#                          aes(x = a0, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "a0") +
+#       theme(legend.position = "none")
+#     
+#     trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
+#       geom_line() +
+#       labs(y = "b0")
+#     density_b0 <- ggplot(data = chains, 
+#                          aes(x = b0, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "b0") +
+#       theme(legend.position = "none")
+#     
+#     trace_b1 <- ggplot(data = chains, aes(x = iteration, y = b1, color = chain)) +
+#       geom_line() +
+#       labs(y = "b1")
+#     density_b1 <- ggplot(data = chains, 
+#                          aes(x = b1, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "b1") +
+#       theme(legend.position = "none")
+#     
+#     trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
+#       geom_line() +
+#       labs(y = "sigma1")
+#     density_sigma1 <- ggplot(data = chains, 
+#                              aes(x = sigma1, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "sigma1") +
+#       theme(legend.position = "none")
+#     
+#     diagnostic_plot <- plot_grid(trace_a0, density_a0,
+#               trace_b0, density_b0,
+#               trace_b1, density_b1,
+#               trace_sigma1, density_sigma1,
+#               ncol = 2, nrow = nrows)
+#   }
+#   if (effect == "distinct") {
+#     nrows <- 5
+#     
+#     trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
+#       geom_line() +
+#       labs(y = "a0")
+#     density_a0 <- ggplot(data = chains, 
+#                          aes(x = a0, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "a0") +
+#       theme(legend.position = "none")
+#     
+#     trace_a1 <- ggplot(data = chains, aes(x = iteration, y = a1, color = chain)) +
+#       geom_line() +
+#       labs(y = "a1")
+#     density_a1 <- ggplot(data = chains, 
+#                          aes(x = a1, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "a1") +
+#       theme(legend.position = "none")
+#     
+#     trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
+#       geom_line() +
+#       labs(y = "b0")
+#     density_b0 <- ggplot(data = chains, 
+#                          aes(x = b0, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "b0") +
+#       theme(legend.position = "none")
+#     
+#     trace_b1 <- ggplot(data = chains, aes(x = iteration, y = b1, color = chain)) +
+#       geom_line() +
+#       labs(y = "b1")
+#     density_b1 <- ggplot(data = chains, 
+#                          aes(x = b1, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "b1") +
+#       theme(legend.position = "none")
+#     
+#     trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
+#       geom_line() +
+#       labs(y = "sigma1")
+#     density_sigma1 <- ggplot(data = chains, 
+#                              aes(x = sigma1, color = chain, fill = chain)) +
+#       geom_density(alpha = 0.25) +
+#       labs(x = "sigma1") +
+#       theme(legend.position = "none")
+#     
+#     diagnostic_plot <- plot_grid(trace_a0, density_a0,
+#               trace_a1, density_a1,
+#               trace_b0, density_b0,
+#               trace_b1, density_b1,
+#               trace_sigma1, density_sigma1,
+#               ncol = 2, nrow = nrows)
+#     
+#   }
+#   save_plot(filename = paste0("07_results/01_interim_results/model_outputs/graph/diagnostic_plots/fit_",
+#                               model_code, "_effect_", effect, ".png"), 
+#             plot = diagnostic_plot,
+#             ncol = 2,
+#             nrow = nrows)
+#             # width = 10,
+#             # height = nrows * 3)
+#   return(diagnostic_plot)
+# }
+
+
+
+
 check_convergence <- function(params, effect, model_code) {
   # Load file
   load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -97,169 +277,127 @@ check_convergence <- function(params, effect, model_code) {
   # Process Nimble output into dataframe
   chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
     select(params[-length(params)]) %>%
-    mutate(chain = "chain 1",
+    mutate(chain = "1",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
   chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
     select(params[-length(params)]) %>%
-    mutate(chain = "chain 2",
+    mutate(chain = "2",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
-  chains <- rbind(chain1, chain2)
-  # Plot
-  if (effect %in% c("1c_VS_0c", "common")) {
-    nrows <- 4
+  chains <- rbind(chain1, chain2) 
+  
+  chains_l <- pivot_longer(chains, cols = params[-length(params)], names_to = "parameter") 
+  
+  param.mean <- chains_l %>%
+    group_by(parameter, chain) %>%
+    summarize(m = mean(value))
+  
+  param.running.mean <- chains_l %>%
+    arrange(parameter, iteration) %>%
+    group_by(parameter, chain) %>%
+    mutate(rm = cumsum(value)/iteration)
+  
+  trace.plots <- ggplot(data = chains_l, 
+                        aes(x = iteration, y = value, color = chain)) +
+    geom_line() +
+    labs(y = "trace") +
+    theme(legend.position = "none") +
+    facet_wrap( ~ parameter,
+                scales = "free",
+                ncol = 1)
+  
+  density.plots <- ggplot(data = chains_l, 
+                          aes(x = value, color = chain, fill = chain)) +
+    geom_density(alpha = 0.25) +
+    labs(x = "density") +
+    theme(legend.position = "none") +
+    facet_wrap( ~ parameter,
+                scales = "free_y",
+                ncol = 1)
+  
+  running.mean.plot <- ggplot(param.running.mean, 
+                              aes(x = iteration, y = rm, color = chain)) + 
+    geom_line() + 
+    geom_hline(aes(yintercept = m), param.mean,
+               colour = "black", alpha = 0.5) + 
+    ylab("running Mean") +
+    facet_grid(parameter ~ chain, scales = "free")
     
-    trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
-      geom_line() +
-      labs(y = "a0")
-    density_a0 <- ggplot(data = chains, 
-                         aes(x = a0, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "a0") +
-      theme(legend.position = "none")
-    
-    trace_a1 <- ggplot(data = chains, aes(x = iteration, y = a1, color = chain)) +
-      geom_line() +
-      labs(y = "a1")
-    density_a1 <- ggplot(data = chains, 
-                         aes(x = a1, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "a1") +
-      theme(legend.position = "none")
-    
-    trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
-      geom_line() +
-      labs(y = "b0")
-    density_b0 <- ggplot(data = chains, 
-                         aes(x = b0, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "b0") +
-      theme(legend.position = "none")
-    
-    trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
-      geom_line() +
-      labs(y = "sigma1")
-    density_sigma1 <- ggplot(data = chains, 
-                             aes(x = sigma1, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "sigma1") +
-      theme(legend.position = "none")
-    
-    diagnostic_plot <- plot_grid(trace_a0, density_a0,
-              trace_a1, density_a1,
-              trace_b0, density_b0,
-              trace_sigma1, density_sigma1,
-              ncol = 2, nrow = nrows)
-  } 
-  if (effect == "2-3c_VS_0c") {
-    nrows <- 4
-    
-    trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
-      geom_line() +
-      labs(y = "a0")
-    density_a0 <- ggplot(data = chains, 
-                         aes(x = a0, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "a0") +
-      theme(legend.position = "none")
-    
-    trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
-      geom_line() +
-      labs(y = "b0")
-    density_b0 <- ggplot(data = chains, 
-                         aes(x = b0, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "b0") +
-      theme(legend.position = "none")
-    
-    trace_b1 <- ggplot(data = chains, aes(x = iteration, y = b1, color = chain)) +
-      geom_line() +
-      labs(y = "b1")
-    density_b1 <- ggplot(data = chains, 
-                         aes(x = b1, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "b1") +
-      theme(legend.position = "none")
-    
-    trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
-      geom_line() +
-      labs(y = "sigma1")
-    density_sigma1 <- ggplot(data = chains, 
-                             aes(x = sigma1, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "sigma1") +
-      theme(legend.position = "none")
-    
-    diagnostic_plot <- plot_grid(trace_a0, density_a0,
-              trace_b0, density_b0,
-              trace_b1, density_b1,
-              trace_sigma1, density_sigma1,
-              ncol = 2, nrow = nrows)
-  }
-  if (effect == "distinct") {
-    nrows <- 5
-    
-    trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
-      geom_line() +
-      labs(y = "a0")
-    density_a0 <- ggplot(data = chains, 
-                         aes(x = a0, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "a0") +
-      theme(legend.position = "none")
-    
-    trace_a1 <- ggplot(data = chains, aes(x = iteration, y = a1, color = chain)) +
-      geom_line() +
-      labs(y = "a1")
-    density_a1 <- ggplot(data = chains, 
-                         aes(x = a1, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "a1") +
-      theme(legend.position = "none")
-    
-    trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
-      geom_line() +
-      labs(y = "b0")
-    density_b0 <- ggplot(data = chains, 
-                         aes(x = b0, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "b0") +
-      theme(legend.position = "none")
-    
-    trace_b1 <- ggplot(data = chains, aes(x = iteration, y = b1, color = chain)) +
-      geom_line() +
-      labs(y = "b1")
-    density_b1 <- ggplot(data = chains, 
-                         aes(x = b1, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "b1") +
-      theme(legend.position = "none")
-    
-    trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
-      geom_line() +
-      labs(y = "sigma1")
-    density_sigma1 <- ggplot(data = chains, 
-                             aes(x = sigma1, color = chain, fill = chain)) +
-      geom_density(alpha = 0.25) +
-      labs(x = "sigma1") +
-      theme(legend.position = "none")
-    
-    diagnostic_plot <- plot_grid(trace_a0, density_a0,
-              trace_a1, density_a1,
-              trace_b0, density_b0,
-              trace_b1, density_b1,
-              trace_sigma1, density_sigma1,
-              ncol = 2, nrow = nrows)
-    
-  }
+  # Plot all the plots together
+  diagnostic_plot <- plot_grid(trace.plots,
+                               density.plots, 
+                               running.mean.plot,
+                               ncol = 3, nrow = 1)
+ 
+  nrows = length(params)
   save_plot(filename = paste0("07_results/01_interim_results/model_outputs/graph/diagnostic_plots/fit_",
                               model_code, "_effect_", effect, ".png"), 
             plot = diagnostic_plot,
-            ncol = 2,
-            nrow = nrows)
-            # width = 10,
-            # height = nrows * 3)
+            ncol = 3,
+            nrow = 1,
+            base_width = 10,
+            base_height = nrows * 3)
   return(diagnostic_plot)
 }
+
+
+
+check_convergence_several_predictors <- function(params.plot, nimble_output) {
+  # Process Nimble output into dataframe
+  chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
+    select(params.plot) %>%
+    mutate(chain = "1",
+           iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
+  chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
+    select(params.plot) %>%
+    mutate(chain = "2",
+           iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
+  chains <- rbind(chain1, chain2) 
+  
+  chains_l <- pivot_longer(chains, cols = params.plot, names_to = "parameter") 
+  
+  param.mean <- chains_l %>%
+    group_by(parameter, chain) %>%
+    summarize(m = mean(value))
+  
+  param.running.mean <- chains_l %>%
+    arrange(parameter, iteration) %>%
+    group_by(parameter, chain) %>%
+    mutate(rm = cumsum(value)/iteration)
+  
+  trace.plots <- ggplot(data = chains_l, 
+                        aes(x = iteration, y = value, color = chain)) +
+    geom_line() +
+    labs(y = "trace") +
+    theme(legend.position = "none") +
+    facet_wrap( ~ parameter,
+                scales = "free",
+                ncol = 1)
+  
+  density.plots <- ggplot(data = chains_l, 
+                          aes(x = value, color = chain, fill = chain)) +
+    geom_density(alpha = 0.25) +
+    labs(x = "density") +
+    theme(legend.position = "none") +
+    facet_wrap( ~ parameter,
+                scales = "free_y",
+                ncol = 1)
+  
+  running.mean.plot <- ggplot(param.running.mean, 
+                              aes(x = iteration, y = rm, color = chain)) + 
+    geom_line() + 
+    geom_hline(aes(yintercept = m), param.mean,
+               colour = "black", alpha = 0.5) + 
+    ylab("running Mean") +
+    facet_grid(parameter ~ chain, scales = "free")
+  
+  # Plot all the plots together
+  diagnostic_plot <- plot_grid(trace.plots,
+                               density.plots, 
+                               running.mean.plot,
+                               ncol = 3, nrow = 1)
+  return(diagnostic_plot)
+}
+
 
 
 

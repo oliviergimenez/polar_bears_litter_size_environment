@@ -125,27 +125,59 @@ save(list = paste0("fit_", model_code, mode),
 # ~~~ b. Check convergence -----------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/", 
                    model_code, toupper(mode), ".RData"))
+nimble_output <- get(paste0("fit_", model_code))
+
+print(paste0("check convergence of model_", model_code))
+
+# Process Nimble output into dataframe
+chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
+  select(params[-length(params)]) %>%
+  mutate(chain = "chain 1",
+         iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
+chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
+  select(params[-length(params)]) %>%
+  mutate(chain = "chain 2",
+         iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
+chains <- rbind(chain1, chain2)
 
 
+trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
+  geom_line() +
+  labs(y = "a0")
+density_a0 <- ggplot(data = chains, 
+                     aes(x = a0, color = chain, fill = chain)) +
+  geom_density(alpha = 0.25) +
+  labs(x = "a0") +
+  theme(legend.position = "none")
 
-# df1 <- data.frame(get(paste0("fit_", model_code, mode))$samples$chain1) %>%
-#   select(a0, b0, sigma1) %>%
-#   gather(key = "parameter", value = "value") %>%
-#   mutate(chain = 1,
-#          iteration = seq(1, 45000, 1))
-# 
-# 
-# df2 <- data.frame(get(paste0("fit_", model_code, mode))$samples$chain2) %>%
-#   select(a0, b0, sigma1) %>%
-#   gather(key = "parameter", value = "value") %>%
-#   mutate(chain = 2,
-#          iteration = seq(1, 45000, 1))
-# 
-# df <- rbind(df1, df2)
-# 
-# ggplot(data = df, aes(x = iteration, y = value, color = chain)) + 
-#   geom_line() + 
-#   facet_wrap(~parameter, scales = "free")
+trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
+  geom_line() +
+  labs(y = "b0")
+density_b0 <- ggplot(data = chains, 
+                     aes(x = b0, color = chain, fill = chain)) +
+  geom_density(alpha = 0.25) +
+  labs(x = "b0") +
+  theme(legend.position = "none")
+
+trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
+  geom_line() +
+  labs(y = "sigma1")
+density_sigma1 <- ggplot(data = chains, 
+                         aes(x = sigma1, color = chain, fill = chain)) +
+  geom_density(alpha = 0.25) +
+  labs(x = "sigma1") +
+  theme(legend.position = "none")
+
+diagnostic_plot <- plot_grid(trace_a0, density_a0,
+                             trace_b0, density_b0,
+                             trace_sigma1, density_sigma1,
+                             ncol = 2, nrow = 3)
+
+save_plot(filename = paste0("07_results/01_interim_results/model_outputs/graph/diagnostic_plots/fit_",
+                            model_code, ".png"), 
+          plot = diagnostic_plot,
+          ncol = 2,
+          nrow = 3)
 
 
 
@@ -221,6 +253,7 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 check_convergence(params = params,
                   effect = effect,
                   model_code = model_code)
+
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -336,8 +369,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -452,8 +486,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -574,8 +609,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -693,9 +729,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -813,8 +849,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -930,8 +967,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -1053,9 +1091,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
