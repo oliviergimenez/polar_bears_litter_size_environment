@@ -5,6 +5,7 @@
 #==============================================================================#
 
 
+# Null model -------------------------------------------------------------------
 null_model <- nimbleCode({
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -26,6 +27,22 @@ null_model <- nimbleCode({
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
 })
+
+# Null model binomial ----------------------------------------------------------
+
+null_model_binomial <- nimbleCode({
+  for(i in 1:N) {
+    y[i] ~ dbin(p[i], n[i])
+    logit(p[i]) <- b0
+  }
+  for (i in 1:nbyear) {
+    eps1[i] ~ dnorm(0, sd = sigma1)
+  }
+  sigma1 ~ dunif(0, 10)
+  b0 ~ dnorm(0.00000E+00, sd = 1.5)
+  b1 ~ dnorm(0.00000E+00, sd = 1.5)
+})
+
 
 
 
@@ -68,88 +85,181 @@ get_coefs_and_params <- function(y, var_scaled, effect, mode) {
 
 
 
-################################################################################
 
-library(ggmcmc)
-library(R2jags)
-
-load("07_results/01_interim_results/model_outputs/OLD/model_1.1.2_D_common_slope.RData")
-jags_output <- fit_1.1.2_D_common
-
-x <- as.mcmc(jags_output)
-x2 <- ggs(x)
-y <- as.mcmc(fit_1.2.2_E_effect_1c_VS_0c$samples)
-y1 <- fit_1.2.2_E_effect_1c_VS_0c$samples
-
-nimble.output <- fit_1.2.2_E_effect_1c_VS_0c
-df_mcmc_final <- c()
-for (i in 1:length(nimble.output$samples)) {
-  df_mcmc <- as.data.frame(mcmc.chains$chain1)
-  columns_eps <- grep(pattern = "eps1", x = colnames(df_mcmc))
-  df_mcmc <- df_mcmc[, -columns_eps] %>%
-    mutate(Iteration = seq(1, dim(mcmc.chains$chain1)[1]))
-  columns_to_pivot <- colnames(df_mcmc)[-ncol(df_mcmc)]
-  df_mcmc <- df_mcmc %>%
-    mutate(Chain = i) %>%
-    pivot_longer(data = .,
-                 cols = all_of(columns_to_pivot),
-                 names_to = "Parameter") %>%
-    arrange(Parameter)
-  df_mcmc_final <- rbind(df_mcmc_final, df_mcmc)
+check_convergence <- function(params, effect, model_code) {
+  # Load file
+  load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                     model_code, "_effect_", effect, ".RData"))
+  nimble_output <- get(paste0("fit_", model_code, "_effect_", effect))
+  # rm(list(get(paste0("fit_", model_code, "_effect_", effect))))
+  print(paste0("check convergence of model_", model_code, "_effect_", effect))
+  
+  # Process Nimble output into dataframe
+  chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
+    select(params[-length(params)]) %>%
+    mutate(chain = "chain 1",
+           iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
+  chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
+    select(params[-length(params)]) %>%
+    mutate(chain = "chain 2",
+           iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
+  chains <- rbind(chain1, chain2)
+  # Plot
+  if (effect %in% c("1c_VS_0c", "common")) {
+    nrows <- 4
+    
+    trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
+      geom_line() +
+      labs(y = "a0")
+    density_a0 <- ggplot(data = chains, 
+                         aes(x = a0, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "a0") +
+      theme(legend.position = "none")
+    
+    trace_a1 <- ggplot(data = chains, aes(x = iteration, y = a1, color = chain)) +
+      geom_line() +
+      labs(y = "a1")
+    density_a1 <- ggplot(data = chains, 
+                         aes(x = a1, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "a1") +
+      theme(legend.position = "none")
+    
+    trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
+      geom_line() +
+      labs(y = "b0")
+    density_b0 <- ggplot(data = chains, 
+                         aes(x = b0, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "b0") +
+      theme(legend.position = "none")
+    
+    trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
+      geom_line() +
+      labs(y = "sigma1")
+    density_sigma1 <- ggplot(data = chains, 
+                             aes(x = sigma1, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "sigma1") +
+      theme(legend.position = "none")
+    
+    diagnostic_plot <- plot_grid(trace_a0, density_a0,
+              trace_a1, density_a1,
+              trace_b0, density_b0,
+              trace_sigma1, density_sigma1,
+              ncol = 2, nrow = nrows)
+  } 
+  if (effect == "2-3c_VS_0c") {
+    nrows <- 4
+    
+    trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
+      geom_line() +
+      labs(y = "a0")
+    density_a0 <- ggplot(data = chains, 
+                         aes(x = a0, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "a0") +
+      theme(legend.position = "none")
+    
+    trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
+      geom_line() +
+      labs(y = "b0")
+    density_b0 <- ggplot(data = chains, 
+                         aes(x = b0, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "b0") +
+      theme(legend.position = "none")
+    
+    trace_b1 <- ggplot(data = chains, aes(x = iteration, y = b1, color = chain)) +
+      geom_line() +
+      labs(y = "b1")
+    density_b1 <- ggplot(data = chains, 
+                         aes(x = b1, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "b1") +
+      theme(legend.position = "none")
+    
+    trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
+      geom_line() +
+      labs(y = "sigma1")
+    density_sigma1 <- ggplot(data = chains, 
+                             aes(x = sigma1, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "sigma1") +
+      theme(legend.position = "none")
+    
+    diagnostic_plot <- plot_grid(trace_a0, density_a0,
+              trace_b0, density_b0,
+              trace_b1, density_b1,
+              trace_sigma1, density_sigma1,
+              ncol = 2, nrow = nrows)
+  }
+  if (effect == "distinct") {
+    nrows <- 5
+    
+    trace_a0 <- ggplot(data = chains, aes(x = iteration, y = a0, color = chain)) +
+      geom_line() +
+      labs(y = "a0")
+    density_a0 <- ggplot(data = chains, 
+                         aes(x = a0, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "a0") +
+      theme(legend.position = "none")
+    
+    trace_a1 <- ggplot(data = chains, aes(x = iteration, y = a1, color = chain)) +
+      geom_line() +
+      labs(y = "a1")
+    density_a1 <- ggplot(data = chains, 
+                         aes(x = a1, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "a1") +
+      theme(legend.position = "none")
+    
+    trace_b0 <- ggplot(data = chains, aes(x = iteration, y = b0, color = chain)) +
+      geom_line() +
+      labs(y = "b0")
+    density_b0 <- ggplot(data = chains, 
+                         aes(x = b0, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "b0") +
+      theme(legend.position = "none")
+    
+    trace_b1 <- ggplot(data = chains, aes(x = iteration, y = b1, color = chain)) +
+      geom_line() +
+      labs(y = "b1")
+    density_b1 <- ggplot(data = chains, 
+                         aes(x = b1, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "b1") +
+      theme(legend.position = "none")
+    
+    trace_sigma1 <- ggplot(data = chains, aes(x = iteration, y = sigma1, color = chain)) +
+      geom_line() +
+      labs(y = "sigma1")
+    density_sigma1 <- ggplot(data = chains, 
+                             aes(x = sigma1, color = chain, fill = chain)) +
+      geom_density(alpha = 0.25) +
+      labs(x = "sigma1") +
+      theme(legend.position = "none")
+    
+    diagnostic_plot <- plot_grid(trace_a0, density_a0,
+              trace_a1, density_a1,
+              trace_b0, density_b0,
+              trace_b1, density_b1,
+              trace_sigma1, density_sigma1,
+              ncol = 2, nrow = nrows)
+    
+  }
+  save_plot(filename = paste0("07_results/01_interim_results/model_outputs/graph/diagnostic_plots/fit_",
+                              model_code, "_effect_", effect, ".png"), 
+            plot = diagnostic_plot,
+            ncol = 2,
+            nrow = nrows)
+            # width = 10,
+            # height = nrows * 3)
+  return(diagnostic_plot)
 }
-
-  
-  
-  
-
-f1 <- ggs_traceplot(df_mcmc_final) + 
-  theme_bw() +
-  theme(legend.position = "none")
-f2 <- ggs_density(df_mcmc_final) + 
-  theme_bw()
-f3 <- ggs_running(df_mcmc_final) + 
-  theme_bw() +
-  theme(legend.position = "none")
-x <- grid.arrange(f1, f2, f3, ncol = 3, nrow = 1)
-
-
-y2 <- ggs(y)
-processed_output <- ggs(as.mcmc(fit_1.2.2_E_effect_1c_VS_0c)) %>%
-  filter(Parameter %in% c("a0", "a1", "a2", "b0", "b1", "c0", "c1", "deviance"))
-
-check_convergence <- function(jags_output, model_code, slope, mode) {
-  processed_output <- ggs(as.mcmc(jags_output)) %>%
-    filter(Parameter %in% c("a0", "a1", "a2", "b0", "b1", "c0", "c1", "deviance"))
-  
-  f1 <- ggs_traceplot(processed_output) + 
-    theme_bw() +
-    theme(legend.position = "none")
-  f2 <- ggs_density(processed_output) + 
-    theme_bw()
-  f3 <- ggs_running(processed_output) + 
-    theme_bw() +
-    theme(legend.position = "none")
-  x <- grid.arrange(f1, f2, f3, ncol = 3, nrow = 1)
-  
-  nbr_rows <- length(unique(processed_output$Parameter))
-  
-  ggsave(x,
-         filename = paste0("07_results/01_interim_results/model_outputs/graphs/diagnostic_plots/model_",
-                           model_code, "_", slope, toupper(mode), ".png"),
-         width = 17.5, height = 2.5*nbr_rows)
-  
-}
-
-
-################################################################################
-
-
-
-
-
-
-
-
 
 
 

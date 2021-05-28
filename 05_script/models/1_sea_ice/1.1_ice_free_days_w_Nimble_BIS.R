@@ -1,6 +1,7 @@
 #==============================================================================#
 #                                                                              #
-#                         Models with only ice-free days                       #
+#                     Models with only sea ice-free days                       #
+#                              (Binomial model)                                #
 #                                                                              #
 #==============================================================================#
 
@@ -10,13 +11,11 @@ library(viridis)
 library(ggmcmc)
 library(gridExtra)
 library(nimble)
-library(MCMCvis)
-library(cowplot)
 Sys.setenv(LANG = "en")
 
 # READY VARIABLES ===========================================================
 # CR data
-CR_data <- read_csv("06_processed_data/CR_data/CR_f_clean.csv")
+CR_data <- read_csv("06_processed_data/CR_data/CR_f_with_cubs_clean.csv")
 
 # Sea ice data
 sea_ice_data <- read_csv("06_processed_data/sea_ice_data/retreat_advance_ice_free_days_E.csv")
@@ -24,7 +23,6 @@ sea_ice_data <- data.frame(sea_ice_data,
                            ice_free_days_previous = c(NA, sea_ice_data$ice_free_days[-nrow(sea_ice_data)]),
                            ice_free_days_2y_prior = c(NA, NA, sea_ice_data$ice_free_days[-c(nrow(sea_ice_data),
                                                                                             nrow(sea_ice_data) - 1)]))
-
 
 data_model <- CR_data %>%
   left_join(x = CR_data,
@@ -34,11 +32,16 @@ data_model <- CR_data %>%
   filter(year != 1993) # Same 
 
 
-# build dataset
-
-# The variables will be stored in lists because JAGS requires lists
+# Response variable
 y <- factor(as.numeric(data_model$cub_number_2))
 summary(y)
+
+# Number of litters per year
+n <- data_model %>%
+  mutate(ones = 1) %>%
+  group_by(year) %>%
+  summarize(n = sum(ones)) %>%
+  pull(n)
 
 # Renumérotation des années
 {year <- data_model$year
@@ -79,23 +82,23 @@ source("05_script/models/functions_for_models_Nimble.R")
 # ~~~ a. Run the model ---------------------------------------------------------
 
 model_code <- "null_model"
-mode <- ""
+mode <- "_binomial"
 
-dat <- list(y = as.numeric(y))
-params <- c("a0", "b0", "sigma1", "eps1") 
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     n = n) 
 
+params <- c("b0", "sigma1", "eps1") 
 
-temp.dat <- data.frame(y = y)
-temp.dat$yfac <- as.factor(temp.dat$y)   # Ajout de Y en facteur
-mnl.dat <- mlogit.data(temp.dat, varying = NULL, choice = "yfac", shape = "wide") 
-mlogit.mod <- mlogit(yfac ~ 1, 
-                     data = mnl.dat, 
-                     reflevel = "0")
+# Find initial value for the intercept
+binomial.frequ <- glm(y ~ 1, 
+                      family = "binomial", 
+                      data = data.frame(y = as.factor(y)))
 
-coefs <- as.vector(summary(mlogit.mod)$coefficients)
-
-inits_null <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
-                              b0 = coefs[2] + round(runif(n = 1, -1, 1))/10)
+coefs <- as.vector(summary(binomial.frequ)$coefficients[1])
+inits_null <- function() list(b0 = coefs + round(runif(n = 1, -1, 1))/10)
 
 
 start <- Sys.time()
@@ -125,28 +128,6 @@ save(list = paste0("fit_", model_code, mode),
 # ~~~ b. Check convergence -----------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/", 
                    model_code, toupper(mode), ".RData"))
-
-
-
-# df1 <- data.frame(get(paste0("fit_", model_code, mode))$samples$chain1) %>%
-#   select(a0, b0, sigma1) %>%
-#   gather(key = "parameter", value = "value") %>%
-#   mutate(chain = 1,
-#          iteration = seq(1, 45000, 1))
-# 
-# 
-# df2 <- data.frame(get(paste0("fit_", model_code, mode))$samples$chain2) %>%
-#   select(a0, b0, sigma1) %>%
-#   gather(key = "parameter", value = "value") %>%
-#   mutate(chain = 2,
-#          iteration = seq(1, 45000, 1))
-# 
-# df <- rbind(df1, df2)
-# 
-# ggplot(data = df, aes(x = iteration, y = value, color = chain)) + 
-#   geom_line() + 
-#   facet_wrap(~parameter, scales = "free")
-
 
 
 
@@ -182,7 +163,7 @@ params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
 
 # Generate starting values
 coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
-  
+
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
                          a1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
@@ -218,9 +199,12 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-check_convergence(params = params,
-                  effect = effect,
-                  model_code = model_code)
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+
+
+
+
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 

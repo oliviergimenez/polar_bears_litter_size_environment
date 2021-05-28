@@ -85,7 +85,7 @@ model_1.1.2_E_effect_common <- nimbleCode({
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 3. Ice-free days t-1: effect distinct (1.1.2_E) =============================
+# ~ 4. Ice-free days t-1: effect distinct (1.1.2_E) =============================
 
 model_1.1.2_E_effect_distinct <- nimbleCode({
   
@@ -112,6 +112,29 @@ model_1.1.2_E_effect_distinct <- nimbleCode({
   b1 ~ dnorm(0.00000E+00, sd = 1.5)
   
 })
+
+
+
+
+
+
+# ~ 5. Ice-free days t-1: binomial =============================================
+
+model_1.1.2_E_binomial <- nimbleCode({
+  for(i in 1:N) {
+    y[i] ~ dbin(p[i], n[i])
+    logit(p[i]) <- b0 + b1 * ice_free_days_previous_s[i] + eps1[year[i]]
+  }
+  for (i in 1:nbyear) {
+    eps1[i] ~ dnorm(0, sd = sigma1)
+  }
+  sigma1 ~ dunif(0, 10)
+  b0 ~ dnorm(0.00000E+00, sd = 1.5)
+  b1 ~ dnorm(0.00000E+00, sd = 1.5)
+})
+
+
+
 
 
 # B. Ice-free day t-2 ==========================================================
@@ -194,7 +217,7 @@ model_1.1.3_E_effect_common <- nimbleCode({
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 3. Ice-free days t-2: effect distinct (1.1.3_E) =============================
+# ~ 4. Ice-free days t-2: effect distinct (1.1.3_E) =============================
 
 model_1.1.3_E_effect_distinct <- nimbleCode({
   
