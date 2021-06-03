@@ -26,10 +26,10 @@ model_1.1.2_E_effect_1c_VS_0c <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0.00000E+00, 10)
-  a0 ~ dnorm(0.00000E+00, sd = 10)
-  a1 ~ dnorm(0.00000E+00, sd = 10)
-  b0 ~ dnorm(0.00000E+00, sd = 10)
+  sigma1 ~ dunif(0, 10)
+  a0 ~ dnorm(0.00000E+00, sd = 1.5)
+  a1 ~ dnorm(0.00000E+00, sd = 1.5)
+  b0 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
 
