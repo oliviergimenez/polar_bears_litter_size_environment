@@ -191,6 +191,8 @@ daily_sea_ice_A_3_df <- as.data.frame(daily_sea_ice_A_3_df)
 
 ggplot(daily_sea_ice_A_3_df, aes(x = day_nbr, y = daily_SI, group = year, color = year)) +
   geom_line() +
+  geom_hline(yintercept = get_halfway_sea_ice_concentration(daily_sea_ice_A_3),
+             linetype="dashed", color = "red") +
   theme_bw() +
   labs(x = "Day of the year",
        y = "Daily sea ice concentration") +
@@ -267,12 +269,12 @@ plot(svalbard,
 
 svalbard.planar <- readOGR(dsn = "06_processed_data/svalbard_map",
                            layer = "svalbard_map_planar")
-buffer.size <- 500000
+buffer.size <- 100000
 svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around Svalbard
-                                   byid = TRUE, 
+                                   byid = FALSE, 
                                    id = NULL, 
                                    width = buffer.size, 
-                                   quadsegs = 5, 
+                                   quadsegs = 10, 
                                    capStyle = "ROUND",
                                    joinStyle = "ROUND",
                                    mitreLimit = 1.0)
@@ -283,7 +285,6 @@ plot(svalbard.planar,
 sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/hamburg/1992/raster_stack/sea_ice_raster_stack_1992.tif")
 svalbard.buffers <- spTransform(svalbard.buffers.planar, 
                                 CRSobj = crs(sea_ice_stack)) # Re project on a sphere, in polar coordinates
-
 
 
 # ~~ b. Extract the daily mean sea ice concentration ---------------------------
@@ -323,13 +324,12 @@ for (i in 1:length(years)) {
   
   daily_sea_ice_B[[i]] <- daily_sea_ice_year_i
   print(paste("done", years[i]))
-  print(Sys.time())
 }
 end <- Sys.time()
 end - start
 
 save(daily_sea_ice_B, 
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer.RData")
 
 
 
@@ -402,14 +402,14 @@ ggplot(daily_sea_ice_B_df, aes(x = day_nbr, y = daily_SI, group = year, color = 
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load the data
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_B_2 <- interpolate(daily_sea_ice_B, years)
 
 save(daily_sea_ice_B_2,
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated.RData")
 
 
 # Plot
@@ -430,7 +430,7 @@ ggplot(daily_sea_ice_B_df, aes(x = day_nbr, y = daily_SI, group = year, color = 
   labs(x = "Day of the year",
        y = "Daily sea ice concentration")
 
-ggsave("06_processed_data/sea_ice_data/graphs/daily_sea_ice_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/daily_sea_ice_100km_buffer.png",
        width = 10, height = 7.5)
 
 ggplot(daily_sea_ice_B_df, aes(x = day_nbr, y = daily_SI, group = year, color = year)) +
@@ -440,7 +440,7 @@ ggplot(daily_sea_ice_B_df, aes(x = day_nbr, y = daily_SI, group = year, color = 
        y = "Daily sea ice concentration") +
   facet_wrap(~year)
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_500km_buffer.png.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_100km_buffer.png",
        width = 10, height = 7.5)
 
 rm(daily_sea_ice_B_df)
@@ -452,14 +452,14 @@ rm(daily_sea_ice_B_df)
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load the data
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_B_3 <- correct_SI_mistakes(daily_sea_ice_B_2, years)
 
 save(daily_sea_ice_B_3, 
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated_corrected.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
 
 
 # Plot corrected daily SI 
@@ -475,12 +475,14 @@ daily_sea_ice_B_3_df <- as.data.frame(daily_sea_ice_B_3_df)
 
 ggplot(daily_sea_ice_B_3_df, aes(x = day_nbr, y = daily_SI, group = year, color = year)) +
   geom_line() +
+  geom_hline(yintercept = get_halfway_sea_ice_concentration(daily_sea_ice_B_3),
+             linetype="dashed", color = "red") +
   theme_bw() +
   labs(x = "Day of the year",
        y = "Daily sea ice concentration") +
   facet_wrap(~year)
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_B_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_B_100km_buffer.png",
        width = 10, height = 7.5)
 
 
@@ -490,7 +492,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_B_500km_buf
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load the data
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
@@ -511,7 +513,7 @@ SI_retreat_advance_date_B %>%
        y = "Day of the year",
        color = "")
 
-ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_100km_buffer.png",
        width = 6, height = 4)
 
 
@@ -536,11 +538,11 @@ plot(svalbard,
 
 
 
-# C. Barents sea where depth <300m =============================================
+# C. Barents sea where depth <600m =============================================
 
 # ~ 1. Extract the daily sea ice concentration for the area for each year ------
 
-# ~~ a. Get ID of cells with <300m depth ---------------------------------------
+# ~~ a. Get ID of cells with <600m depth ---------------------------------------
 barents_sea_boundary_polar <- readOGR("06_processed_data/subpopulation_boundary",
                                       layer = "barents_sea_subpop_polar")
 
@@ -554,8 +556,8 @@ crop.square <- extent(-1000000, 2500000, -2000000, 1000000) # Same extent as tha
 bath_extended <- extend(x = bathymetry_barents_sea, 
                         y = crop.square, 
                         value = -5000)
-# Extract the cell with depth >= -300 or with NA
-shallow_cells <- Which(bath_extended >= -300, cells = TRUE)
+# Extract the cell with depth >= -600 or with NA
+shallow_cells <- Which(bath_extended >= -600, cells = TRUE)
 NA_cells <- Which(is.na(bath_extended), cells = TRUE)
 
 
@@ -597,13 +599,12 @@ for (i in 1:length(years)) {
   
   daily_sea_ice_C[[i]] <- daily_sea_ice_year_i
   print(paste("done", years[i]))
-  print(Sys.time())
 }
 end <- Sys.time()
 end - start
 
 save(daily_sea_ice_C, 
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea.RData")
 
 rm(barents_sea_boundary_polar, bathymetry_barents_sea, crop.square, bath_extended, 
    shallow_cells, NA_cells, correction.cnst, daily_sea_ice_year_i, raster_ID, mat, 
@@ -637,14 +638,14 @@ rm(df_k, daily_sea_ice_C_df, daily_SI, day_nbr, year, k)
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load the data
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_C_2 <- interpolate(daily_sea_ice_C, years)
 
 save(daily_sea_ice_C_2,
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated.RData")
 
 
 
@@ -653,14 +654,13 @@ save(daily_sea_ice_C_2,
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load the data
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_C_3 <- correct_SI_mistakes(daily_sea_ice_C_2, years)
-
 save(daily_sea_ice_C_3, 
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated_corrected.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated_corrected.RData")
 
 
 # Plot corrected daily SI 
@@ -676,12 +676,14 @@ daily_sea_ice_C_3_df <- as.data.frame(daily_sea_ice_C_3_df)
 
 ggplot(daily_sea_ice_C_3_df, aes(x = day_nbr, y = daily_SI, group = year, color = year)) +
   geom_line() +
+  geom_hline(yintercept = get_halfway_sea_ice_concentration(daily_sea_ice_C_3),
+             linetype="dashed", color = "red") +
   theme_bw() +
   labs(x = "Day of the year",
        y = "Daily sea ice concentration") +
   facet_wrap(~year)
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_C_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_C_600m_depth_barents_sea.png",
        width = 10, height = 7.5)
 
 
@@ -692,7 +694,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_C_300m_dept
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load data
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run function
@@ -713,7 +715,7 @@ SI_retreat_advance_date_C %>%
        y = "Day of the year",
        color = "")
 
-ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_300m_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_600m_barents_sea.png",
        width = 6, height = 4)
 
 
@@ -727,7 +729,7 @@ barents_sea_boundary_polar <- readOGR("06_processed_data/subpopulation_boundary"
 svalbard <- readOGR(dsn = "06_processed_data/svalbard_map",
                     layer = "svalbard_map_polar")
 
-cuts <- c(0, -300, -1000, -2000, -3000, -6000) #set breaks
+cuts <- c(0, -600, -1000, -2000, -3000, -6000) #set breaks
 pal <- colorRampPalette(c("black", "grey99"))
 plot(bathymetry_barents_sea,
      breaks = cuts, 
@@ -740,7 +742,7 @@ plot(svalbard,
 
 
 
-# D. Buffer around Svalbard where depth <300m ==================================
+# D. Buffer around Svalbard where depth <600m ==================================
 
 # ~ 1. Extract the daily sea ice concentration for the area for each year ------
 
@@ -748,9 +750,9 @@ plot(svalbard,
 
 svalbard.planar <- readOGR(dsn = "06_processed_data/svalbard_map",
                            layer = "svalbard_map_planar")
-buffer.size <- 500000
+buffer.size <- 100000
 svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around Svalbard
-                                   byid = TRUE, 
+                                   byid = FALSE, 
                                    id = NULL, 
                                    width = buffer.size, 
                                    quadsegs = 5, 
@@ -768,7 +770,7 @@ svalbard.buffers <- spTransform(svalbard.buffers.planar,
 svalbard <- spTransform(svalbard.planar, 
                         CRSobj = crs(sea_ice_stack)) # Re project on a sphere, in polar coordinates
 
-# ~~ b. Get ID of cells with <300m depth ---------------------------------------
+# ~~ b. Get ID of cells with <600m depth ---------------------------------------
 
 bathymetry_barents_sea <- raster("06_processed_data/bathymetry_data/ICBAO_bathymetry_polar_cropped_Barents_sea_final.tif")
 
@@ -780,8 +782,8 @@ crop.square <- extent(-1000000, 2500000, -2000000, 1000000) # Same extent as tha
 bath_extended <- extend(x = bathymetry_barents_sea, 
                         y = crop.square, 
                         value = -5000)
-# Extract the cell with depth >= -300 or with NA
-shallow_cells <- Which(bath_extended >= -300, cells = TRUE)
+# Extract the cell with depth >= -600 or with NA
+shallow_cells <- Which(bath_extended >= -600, cells = TRUE)
 NA_cells <- Which(is.na(bath_extended), cells = TRUE)
 
 
@@ -822,13 +824,12 @@ for (i in 1:length(years)) {
   
   daily_sea_ice_D[[i]] <- daily_sea_ice_year_i
   print(paste("done", years[i]))
-  print(Sys.time())
 }
 end <- Sys.time()
 end - start
 
 save(daily_sea_ice_D, 
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer.RData")
 
 rm(bathymetry_barents_sea, crop.square, bath_extended, buffer.size,
    svalbard.buffers.planar, svalbard.buffers, svalbard.planar,
@@ -863,14 +864,14 @@ rm(df_k, daily_sea_ice_D_df, daily_SI, day_nbr, year, k)
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load the data
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_D_2 <- interpolate(daily_sea_ice_D, years)
 
 save(daily_sea_ice_D_2,
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated.RData")
 
 
 
@@ -879,14 +880,14 @@ save(daily_sea_ice_D_2,
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load the data
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_D_3 <- correct_SI_mistakes(daily_sea_ice_D_2, years)
 
 save(daily_sea_ice_D_3, 
-     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated_corrected.RData")
+     file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated_corrected.RData")
 
 
 # Plot corrected daily SI 
@@ -900,14 +901,17 @@ for (k in 2:length(daily_sea_ice_D_3)) {
 }
 daily_sea_ice_D_3_df <- as.data.frame(daily_sea_ice_D_3_df)
 
+
 ggplot(daily_sea_ice_D_3_df, aes(x = day_nbr, y = daily_SI, group = year, color = year)) +
   geom_line() +
+  geom_hline(yintercept = get_halfway_sea_ice_concentration(daily_sea_ice_D_3),
+             linetype="dashed", color = "red") +
   theme_bw() +
   labs(x = "Day of the year",
        y = "Daily sea ice concentration") +
   facet_wrap(~year)
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_D_300m_depth_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_D_600m_depth_100km_buffer.png",
        width = 10, height = 7.5)
 
 
@@ -918,7 +922,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_sea_ice_D_300m_dept
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load data
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run function
@@ -939,7 +943,7 @@ SI_retreat_advance_date_D %>%
        y = "Day of the year",
        color = "")
 
-ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_300m_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_600m_100km_buffer.png",
        width = 6, height = 4)
 
 
@@ -950,9 +954,9 @@ bathymetry_barents_sea <- raster("06_processed_data/bathymetry_data/ICBAO_bathym
 
 svalbard.planar <- readOGR(dsn = "06_processed_data/svalbard_map",
                            layer = "svalbard_map_planar")
-buffer.size <- 500000
+buffer.size <- 100000
 svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around Svalbard
-                                   byid = TRUE, 
+                                   byid = FALSE, 
                                    id = NULL, 
                                    width = buffer.size, 
                                    quadsegs = 5, 
@@ -968,7 +972,7 @@ svalbard <- spTransform(svalbard.planar,
 
 
 
-cuts <- c(0, -300, -1000, -2000, -3000, -6000) #set breaks
+cuts <- c(0, -600, -1000, -2000, -3000, -6000) #set breaks
 pal <- colorRampPalette(c("black", "grey99"))
 plot(bathymetry_barents_sea,
      breaks = cuts, 
@@ -1015,9 +1019,9 @@ ggplot() +
 
 svalbard.planar <- readOGR(dsn = "06_processed_data/svalbard_map",
                            layer = "svalbard_map_planar")
-buffer.size <- 500000
+buffer.size <- 100000
 svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around Svalbard
-                                   byid = TRUE, 
+                                   byid = FALSE, 
                                    id = NULL, 
                                    width = buffer.size, 
                                    quadsegs = 5, 
@@ -1117,7 +1121,8 @@ save(daily_sea_ice_E_3,
      file = "06_processed_data/sea_ice_data/daily_sea_ice_E_buffer_pelagic_area_interpolated_corrected.RData")
 
 
-# Plot corrected daily SI 
+# Plot corrected daily SI
+years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice_E_3_df <- c()
 for (k in 2:length(daily_sea_ice_E_3)) {
   daily_SI <- daily_sea_ice_E_3[[k]]
@@ -1130,6 +1135,8 @@ daily_sea_ice_E_3_df <- as.data.frame(daily_sea_ice_E_3_df)
 
 ggplot(daily_sea_ice_E_3_df, aes(x = day_nbr, y = daily_SI, group = year, color = year)) +
   geom_line() +
+  geom_hline(yintercept = get_halfway_sea_ice_concentration(daily_sea_ice_E_3),
+             linetype="dashed", color = "red") +
   theme_bw() +
   labs(x = "Day of the year",
        y = "Daily sea ice concentration") +
@@ -1175,7 +1182,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_E_buffer_pelag
 
 svalbard.planar <- readOGR(dsn = "06_processed_data/svalbard_map",
                            layer = "svalbard_map_planar")
-buffer.size <- 500000
+buffer.size <- 100000
 svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around Svalbard
                                    byid = TRUE, 
                                    id = NULL, 
@@ -1226,14 +1233,14 @@ ggsave("10_meetings/2021-05-06 Meeting with Sarah/area E.svg")
 
 
 
-# F. Buffer around Svalabrd with a 60% sea ice concentration threshold ============
+# F. Buffer around Svalabrd with a 60% sea ice concentration threshold =========
 
 # ~ 4. Calculate sea ice retreat and advance dates -----------------------------
 
 source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions.R")
 
 # Load data
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 # Run function
@@ -1256,7 +1263,7 @@ SI_retreat_advance_date_C %>%
        y = "Day of the year",
        color = "")
 
-ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_300m_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_600m_barents_sea.png",
        width = 6, height = 4)
 
 

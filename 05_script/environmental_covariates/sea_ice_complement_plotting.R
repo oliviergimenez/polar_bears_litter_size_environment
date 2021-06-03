@@ -433,8 +433,8 @@ get_ice_covered_days_in_row(daily_sea_ice = daily_sea_ice_A_3,
 get_ice_covered_days_in_row(daily_sea_ice = daily_sea_ice_A_3,
                             days_in_a_row = 7, area_considered = "A")
 
-# Area considered: B (500km buffer around Svalbard)
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated_corrected.RData")
+# Area considered: B (100km buffer around Svalbard)
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
 get_ice_free_days_in_row(daily_sea_ice = daily_sea_ice_B_3,
                          days_in_a_row = 3, area_considered = "B")
 get_ice_free_days_in_row(daily_sea_ice = daily_sea_ice_B_3,
@@ -448,8 +448,8 @@ get_ice_covered_days_in_row(daily_sea_ice = daily_sea_ice_B_3,
 get_ice_covered_days_in_row(daily_sea_ice = daily_sea_ice_B_3,
                             days_in_a_row = 7, area_considered = "B")
 
-# Area considered: C (<300m depth Svalabrd)
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated_corrected.RData")
+# Area considered: C (<600m depth Svalabrd)
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated_corrected.RData")
 get_ice_free_days_in_row(daily_sea_ice = daily_sea_ice_C_3,
                          days_in_a_row = 3, area_considered = "C")
 get_ice_free_days_in_row(daily_sea_ice = daily_sea_ice_C_3,
@@ -464,8 +464,8 @@ get_ice_covered_days_in_row(daily_sea_ice = daily_sea_ice_C_3,
                             days_in_a_row = 7, area_considered = "C")
 
 
-# Area considered: D (<300m depth in 500km buffer around Svalbard)
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated_corrected.RData")
+# Area considered: D (<600m depth in 100km buffer around Svalbard)
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated_corrected.RData")
 get_ice_free_days_in_row(daily_sea_ice = daily_sea_ice_D_3,
                          days_in_a_row = 3, area_considered = "D")
 get_ice_free_days_in_row(daily_sea_ice = daily_sea_ice_D_3,
@@ -479,7 +479,7 @@ get_ice_covered_days_in_row(daily_sea_ice = daily_sea_ice_D_3,
 get_ice_covered_days_in_row(daily_sea_ice = daily_sea_ice_D_3,
                             days_in_a_row = 7, area_considered = "D")
 
-# Area considered: E (500km buffer around Svalbard + pelagic bear area)
+# Area considered: E (100km buffer around Svalbard + pelagic bear area)
 load("06_processed_data/sea_ice_data/daily_sea_ice_E_buffer_pelagic_area_interpolated_corrected.RData")
 get_ice_free_days_in_row(daily_sea_ice = daily_sea_ice_E_3,
                          days_in_a_row = c(3, 5, 7), area_considered = "E")
@@ -771,7 +771,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_bare
 
 # B. Buffer around Svalbard ====================================================
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_B_3 
 
@@ -891,7 +891,7 @@ ggplot(df_plot_SI_retreat, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-free days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_B_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_B_100km_buffer.png",
        width = 10, height = 7.5)
 
 # ADVANCE
@@ -951,7 +951,7 @@ ggplot(df_plot_SI_advance, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-covered days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_B_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_B_100km_buffer.png",
        width = 10, height = 7.5)
 
 
@@ -960,7 +960,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_
 
 # + 2. Calculate the 30-year median/mean sea ice concentration for each day ----
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 daily_sea_ice_df <- c()
@@ -993,7 +993,7 @@ ggplot(daily_sea_ice_df, aes(x = day_nbr, y = mean_daily)) +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_B_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_B_100km_buffer.png",
        width = 6, height = 4)
 
 ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
@@ -1001,7 +1001,7 @@ ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_B_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_B_100km_buffer.png",
        width = 6, height = 4)
 
 
@@ -1010,7 +1010,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_B_500km_buffe
 # + 3. Plot the 2-day variation in SI concentration to spot mistakes -----------
 
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_500km_buffer_interpolated.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 
 
@@ -1042,14 +1042,14 @@ ggplot(df_delta, aes(x = day_nbr, y = delta)) +
   labs(x = "Day",
        y = "2-day difference in sea ice concentration")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_500_km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_100_km_buffer.png",
        width = 10, height = 7.5)
 
 
 
-# C. <300m depth Barents Sea ===================================================
+# C. <600m depth Barents Sea ===================================================
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_C_3 
 
@@ -1169,7 +1169,7 @@ ggplot(df_plot_SI_retreat, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-free days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_C_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_C_600m_depth_barents_sea.png",
        width = 10, height = 7.5)
 
 # ADVANCE
@@ -1229,7 +1229,7 @@ ggplot(df_plot_SI_advance, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-covered days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_C_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_C_600m_depth_barents_sea.png",
        width = 10, height = 7.5)
 
 
@@ -1238,7 +1238,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_
 
 # + 2. Calculate the 30-year median/mean sea ice concentration for each day ----
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_C_3 
 
@@ -1264,15 +1264,15 @@ daily_sea_ice_df <- daily_sea_ice_df %>%
          day_nbr = seq(1, 366, by = 1))
 
 
-write_csv(daily_sea_ice_df, "06_processed_data/sea_ice_data/daily_sea_ice_300m_depth_barents_sea_df_30-year_mean.csv")
-daily_sea_ice_df <- read_csv("06_processed_data/sea_ice_data/daily_sea_ice_300m_depth_barents_sea_df_30-year_mean.csv")
+write_csv(daily_sea_ice_df, "06_processed_data/sea_ice_data/daily_sea_ice_600m_depth_barents_sea_df_30-year_mean.csv")
+daily_sea_ice_df <- read_csv("06_processed_data/sea_ice_data/daily_sea_ice_600m_depth_barents_sea_df_30-year_mean.csv")
 
 ggplot(daily_sea_ice_df, aes(x = day_nbr, y = mean_daily)) +
   geom_line() +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_C_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_C_600m_depth_barents_sea.png",
        width = 6, height = 4)
 
 ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
@@ -1280,7 +1280,7 @@ ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_C_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_C_600m_depth_barents_sea.png",
        width = 6, height = 4)
 
 
@@ -1288,7 +1288,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_C_300m_depth_
 
 # + 3. Plot the 2-day variation in SI concentration to spot mistakes -----------
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_C_2 
 
@@ -1321,7 +1321,7 @@ ggplot(df_delta, aes(x = day_nbr, y = delta)) +
   labs(x = "Day",
        y = "2-day difference in sea ice concentration")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_600m_depth_barents_sea.png",
        width = 10, height = 7.5)
 
 
@@ -1329,10 +1329,10 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_300m
 
 
 
-# D. <300m depth buffer around Svalbard ========================================
+# D. <600m depth buffer around Svalbard ========================================
 
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_D_3 
 
@@ -1452,7 +1452,7 @@ ggplot(df_plot_SI_retreat, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-free days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_D_300m_depth_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_D_600m_depth_100km_buffer.png",
        width = 10, height = 7.5)
 
 # ADVANCE
@@ -1512,7 +1512,7 @@ ggplot(df_plot_SI_advance, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-covered days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_D_300m_depth_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_D_600m_depth_100km_buffer.png",
        width = 10, height = 7.5)
 
 
@@ -1521,7 +1521,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_
 
 # + 2. Calculate the 30-year median/mean sea ice concentration for each day ----
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_D_3 
 
@@ -1547,15 +1547,15 @@ daily_sea_ice_df <- daily_sea_ice_df %>%
          day_nbr = seq(1, 366, by = 1))
 
 
-write_csv(daily_sea_ice_df, "06_processed_data/sea_ice_data/daily_sea_ice_300m_depth_500km_buffer_df_30-year_mean.csv")
-daily_sea_ice_df <- read_csv("06_processed_data/sea_ice_data/daily_sea_ice_300m_depth_500km_buffer_df_30-year_mean.csv")
+write_csv(daily_sea_ice_df, "06_processed_data/sea_ice_data/daily_sea_ice_600m_depth_100km_buffer_df_30-year_mean.csv")
+daily_sea_ice_df <- read_csv("06_processed_data/sea_ice_data/daily_sea_ice_600m_depth_100km_buffer_df_30-year_mean.csv")
 
 ggplot(daily_sea_ice_df, aes(x = day_nbr, y = mean_daily)) +
   geom_line() +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_D_300m_depth_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_D_600m_depth_100km_buffer.png",
        width = 6, height = 4)
 
 ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
@@ -1563,7 +1563,7 @@ ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_D_300m_depth_500km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_D_600m_depth_100km_buffer.png",
        width = 6, height = 4)
 
 
@@ -1571,7 +1571,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_D_300m_depth_
 
 # + 3. Plot the 2-day variation in SI concentration to spot mistakes -----------
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_C_2 
 
@@ -1604,7 +1604,7 @@ ggplot(df_delta, aes(x = day_nbr, y = delta)) +
   labs(x = "Day",
        y = "2-day difference in sea ice concentration")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_D.png",
        width = 10, height = 7.5)
 
 
@@ -1732,7 +1732,7 @@ ggplot(df_plot_SI_retreat, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-free days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_E_500km_buffer_pelagic_area.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_free_days_in_a_row_E_100km_buffer_pelagic_area.png",
        width = 10, height = 7.5)
 
 # ADVANCE
@@ -1792,7 +1792,7 @@ ggplot(df_plot_SI_advance, aes(x = day_start, y = value)) +
   labs(x = "Start day of 5 days in a row",
        y = "Number of ice-covered days in a row")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_E_500km_buffer_pelagic_area.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_a_row_E_100km_buffer_pelagic_area.png",
        width = 10, height = 7.5)
 
 
@@ -1801,7 +1801,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/facetted_five_ice_covered_days_in_
 
 # + 2. Calculate the 30-year median/mean sea ice concentration for each day ----
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_500km_buffer_interpolated_corrected.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated_corrected.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_E_3 
 
@@ -1827,15 +1827,15 @@ daily_sea_ice_df <- daily_sea_ice_df %>%
          day_nbr = seq(1, 366, by = 1))
 
 
-write_csv(daily_sea_ice_df, "06_processed_data/sea_ice_data/daily_sea_ice_300m_depth_500km_buffer_df_30-year_mean.csv")
-daily_sea_ice_df <- read_csv("06_processed_data/sea_ice_data/daily_sea_ice_300m_depth_500km_buffer_df_30-year_mean.csv")
+write_csv(daily_sea_ice_df, "06_processed_data/sea_ice_data/daily_sea_ice_600m_depth_100km_buffer_df_30-year_mean.csv")
+daily_sea_ice_df <- read_csv("06_processed_data/sea_ice_data/daily_sea_ice_600m_depth_100km_buffer_df_30-year_mean.csv")
 
 ggplot(daily_sea_ice_df, aes(x = day_nbr, y = mean_daily)) +
   geom_line() +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_E_500km_buffer_pelagic_area.png",
+ggsave("06_processed_data/sea_ice_data/graphs/mean_daily_sea_ice_E_100km_buffer_pelagic_area.png",
        width = 6, height = 4)
 
 ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
@@ -1843,7 +1843,7 @@ ggplot(daily_sea_ice_df, aes(x = day_nbr, y = median_daily)) +
   theme_bw() +
   labs(x = "Day",
        y = "Sea ice concentration")
-ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_E_500km_buffer_pelagic_area.png",
+ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_E_100km_buffer_pelagic_area.png",
        width = 6, height = 4)
 
 
@@ -1851,7 +1851,7 @@ ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_E_500km_buffe
 
 # + 3. Plot the 2-day variation in SI concentration to spot mistakes -----------
 
-load("06_processed_data/sea_ice_data/daily_sea_ice_depth_300m_barents_sea_interpolated.RData")
+load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated.RData")
 years <- seq(from = 1991, to = 2020, by = 1)
 daily_sea_ice <- daily_sea_ice_C_2 
 
@@ -1884,6 +1884,6 @@ ggplot(df_delta, aes(x = day_nbr, y = delta)) +
   labs(x = "Day",
        y = "2-day difference in sea ice concentration")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_300m_depth_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_SI_600m_depth_barents_sea.png",
        width = 10, height = 7.5)
 

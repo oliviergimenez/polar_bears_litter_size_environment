@@ -64,6 +64,55 @@ interpolate <- function(daily_sea_ice, years) {
   return(daily_sea_ice)
 }
 
+
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+# Old version, not working well at all.
+
+# correct_SI_mistakes <- function(daily_sea_ice, years) {
+#   delta <- c()
+#   year <- c()
+#   day_nbr <- c()
+#   for (i in 1:length(daily_sea_ice)) {
+#     year_i <- rep(years[i], times = length(daily_sea_ice[[i]]) -1)
+#     day_nbr_i <- seq(1, length(daily_sea_ice[[i]]) -1)
+#     delta_i <- c()
+#     for (j in 1:( length(daily_sea_ice[[i]]) - 1 )) {
+#       #delta_i <- c(delta_i, abs(daily_sea_ice[[i]][j] - daily_sea_ice[[i]][j + 1]))
+#       delta_i <- c(delta_i, daily_sea_ice[[i]][j] - daily_sea_ice[[i]][j + 1])
+#       
+#     }
+#     year <- c(year, year_i)
+#     delta <- c(delta, delta_i)
+#     day_nbr <- c(day_nbr, day_nbr_i)
+#   }
+#   df_delta <- data.frame(day_nbr = day_nbr,
+#                          year = year,
+#                          delta = delta)
+#   wrong_measures <- df_delta %>%
+#     filter(abs(delta) > 10)
+#   
+#   # Get the year number
+#   i_years <- c()
+#   for (k in 1:nrow(wrong_measures)) {
+#     i_years <- c(i_years, which(years == wrong_measures$year[k]))
+#   }
+#   wrong_measures <- wrong_measures %>%
+#     mutate(year_i = i_years)
+#   
+#   daily_sea_ice_corrected <- daily_sea_ice
+#   index <- seq(from = 2, to = 14, by = 2)
+#   for (k in index) {
+#     daily_sea_ice_corrected[[wrong_measures$year_i[k]]][wrong_measures$day_nbr[k]] <- 
+#       median(x = c(daily_sea_ice_corrected[[wrong_measures$year_i[k]]][wrong_measures$day_nbr[k] - 1],
+#                    daily_sea_ice_corrected[[wrong_measures$year_i[k]]][wrong_measures$day_nbr[k] + 1]))
+#     
+#   }
+#   return(daily_sea_ice_corrected)
+# }
+
+
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 correct_SI_mistakes <- function(daily_sea_ice, years) {
   delta <- c()
@@ -74,50 +123,6 @@ correct_SI_mistakes <- function(daily_sea_ice, years) {
     day_nbr_i <- seq(1, length(daily_sea_ice[[i]]) -1)
     delta_i <- c()
     for (j in 1:( length(daily_sea_ice[[i]]) - 1 )) {
-      #delta_i <- c(delta_i, abs(daily_sea_ice[[i]][j] - daily_sea_ice[[i]][j + 1]))
-      delta_i <- c(delta_i, daily_sea_ice[[i]][j] - daily_sea_ice[[i]][j + 1])
-      
-    }
-    year <- c(year, year_i)
-    delta <- c(delta, delta_i)
-    day_nbr <- c(day_nbr, day_nbr_i)
-  }
-  df_delta <- data.frame(day_nbr = day_nbr,
-                         year = year,
-                         delta = delta)
-  wrong_measures <- df_delta %>%
-    filter(abs(delta) > 10)
-  
-  # Get the year number
-  i_years <- c()
-  for (k in 1:nrow(wrong_measures)) {
-    i_years <- c(i_years, which(years == wrong_measures$year[k]))
-  }
-  wrong_measures <- wrong_measures %>%
-    mutate(year_i = i_years)
-  
-  daily_sea_ice_corrected <- daily_sea_ice
-  index <- seq(from = 2, to = 14, by = 2)
-  for (k in index) {
-    daily_sea_ice_corrected[[wrong_measures$year_i[k]]][wrong_measures$day_nbr[k]] <- 
-      median(x = c(daily_sea_ice_corrected[[wrong_measures$year_i[k]]][wrong_measures$day_nbr[k] - 1],
-                   daily_sea_ice_corrected[[wrong_measures$year_i[k]]][wrong_measures$day_nbr[k] + 1]))
-    
-  }
-  return(daily_sea_ice_corrected)
-}
-
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-correct_SI_mistakes_trial_update <- function(daily_sea_ice, years) {
-  delta <- c()
-  year <- c()
-  day_nbr <- c()
-  for (i in 1:length(daily_sea_ice)) {
-    year_i <- rep(years[i], times = length(daily_sea_ice[[i]]) -1)
-    day_nbr_i <- seq(1, length(daily_sea_ice[[i]]) -1)
-    delta_i <- c()
-    for (j in 1:( length(daily_sea_ice[[i]]) - 1 )) {
-      #delta_i <- c(delta_i, abs(daily_sea_ice[[i]][j] - daily_sea_ice[[i]][j + 1]))
       delta_i <- c(delta_i, daily_sea_ice[[i]][j] - daily_sea_ice[[i]][j + 1])
       
     }
@@ -132,32 +137,14 @@ correct_SI_mistakes_trial_update <- function(daily_sea_ice, years) {
     filter(abs(delta) > 15) %>%
     mutate(days = 1)
   
-  # How many different mistakes there are
-  years_mistakes <- distinct(wrong_measures$year)
-  ID_mistakes <- c()
-  for (i in 1:length(years_mistakes)) {
-    mistake_year_i <- wrong_measures %>%
-      filter(year = years_mistakes[i])
-    if (nrow(mistake_year_i) == 2) {
-      ID_mistakes <- c(ID_mistakes, i, i)
-    } else {
-      remaining_rows <- nrow(mistake_year_i)
-      while(remaining_rows > 0) {
-        j <- 1
-        while(mistake_year_i$day[j + 1] - mistake_year_i$day[j + 1] == 1 && j <= nrow(mistake_year_i)) {
-          j <- j + 1
-        }
-        ID_mistakes <- c(ID_mistakes, rep(i, times = j))
-        mistake_year_i <- mistake_year_i[-c(1:j),]
-        remaining_rows <- nrow(mistake_year_i)
-        
-      }
-    }
-    
-  }
+  mistake_ID <- sort(rep(c(1:(nrow(wrong_measures)/2)), times = 2)) # Create a vector with the ID of each mistake
+                                                                              # i.e. c(1, 1, 2, 2, 3, 3, ...) since each
+                                                                              # mistake corresponds to one correct point, and
   wrong_measures <- wrong_measures %>%
-    mutate(ID_mistakes = wrong_measures)
-  # Get the year number
+    mutate(mistake_ID = mistake_ID)
+                                                                          # the following aberrant one.
+  # Replace the aberrant value by the value halfway between the previous
+  # and the following point.
   i_years <- c()
   for (k in 1:nrow(wrong_measures)) {
     i_years <- c(i_years, which(years == wrong_measures$year[k]))
@@ -175,6 +162,18 @@ correct_SI_mistakes_trial_update <- function(daily_sea_ice, years) {
   }
   return(daily_sea_ice_corrected)
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 get_halfway_sea_ice_concentration <- function(daily_sea_ice) {

@@ -45,6 +45,7 @@ sea_ice <- data.frame(sea_ice,
                 day_advance, day_advance_previous, day_advance_2y_ago,
                 ice_free_days, ice_free_days_previous, ice_free_days_2y_ago)
 
+
 AO_NAO <- AO %>%
   left_join(x = AO,
             y = NAO,
@@ -56,7 +57,7 @@ AO_NAO <- AO %>%
                 winter_NAO, prior_winter_NAO, 
                 winter_NAO_2y_ago = two_year_prior_winter_NAO,
                 spring_NAO, prior_spring_NAO, 
-                spring_NAO_2y_ago = two_year_prior_spring_NAO) 
+                spring_NAO_2y_ago = two_year_prior_spring_NAO)
 
 
 
@@ -114,6 +115,11 @@ ggplot(AO_NAO_T_SI, aes(x = winter_AO, y = day_retreat)) +
   theme_bw() +
   labs(x = "Winter AO year t",
        y = "day of sea ice retreat year t")
+
+x <- lm(day_retreat ~ winter_AO, data = AO_NAO_T_SI)
+summary(x)
+y <- lm(day_retreat ~ winter_NAO, data = AO_NAO_T_SI)
+summary(y)
 ggsave("10_meetings/2021-04-26 Meeting with Sarah/winter AO VS day retreat.png",
        height = 4, width = 6)
 
@@ -147,6 +153,11 @@ AO_NAO_T_SI_not_2y <- AO_NAO_T_SI %>%
 # Run PCA
 res.pca <- PCA(AO_NAO_T_SI_not_2y, graph = FALSE)
 
+data.no.na <- AO_NAO_T_SI_not_2y[-is.na(AO_NAO_T_SI_not_2y), ]
+
+res.pca <- dudi.pca(df = na.omit(AO_NAO_T_SI_not_2y), 
+                    scale = T, scannf = FALSE, nf = 2)
+
 # Plot
 PCA(AO_NAO_T_SI_not_2y)
 
@@ -157,8 +168,26 @@ plot(res.pca, choix = "var", autoLab = "yes")
 dev.off()
 
 
+# Inertia captured by each axis
+x <- inertia.dudi(res.pca)
+inertia <- data.frame(axis = seq(1, 12, 1),
+                      inertia = x[["tot.inertia"]][["inertia"]],
+                      inertia_percent = 100*x[["tot.inertia"]][["inertia"]]/sum(x[["tot.inertia"]][["inertia"]]),
+                      cum =  x[["tot.inertia"]][["cum"]],
+                      cum_percent =  x[["tot.inertia"]][["cum(%)"]]) %>%
+  arrange(-inertia_percent)
 
+ggplot(inertia, aes(x = axis, y = inertia_percent)) + 
+  geom_col(fill = "grey20", color = "black") +
+  theme_bw() +
+  theme(axis.text.x = element_blank()) +
+  labs(x = "",
+       y = "Inertia (%)")
 
+ggsave("07_results/01_interim_results/correlations/inertia.png",
+       width = 6, height = 4)
+
+# Percentage of varians captured by each axis
 eig.val <- as.data.frame(res.pca$eig) %>%
   mutate(variable = colnames(AO_NAO_T_SI_not_2y)) %>%
   rename(percentage_variance = 'percentage of variance',
