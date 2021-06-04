@@ -17,7 +17,7 @@ interpolate <- function(daily_sea_ice, years) {
   index_j_NA <- c()
   index <- c()
   years.index <- c()
-  for (i in 2:length(years)) {
+  for (i in 1:length(years)) {
     x <- which(is.na(daily_sea_ice[[i]]))
     if (length(x) > 0) {
       year <- rep(years[i], times = length(x))
@@ -253,8 +253,7 @@ get_halfway_sea_ice_concentration <- function(daily_sea_ice) {
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 get_SI_retreat_advance_date <- function(daily_sea_ice, years, days_in_a_row) {
-  years <- seq(from = 1991, to = 2020, by = 1)
-  
+
   # Calculate the halfway sea ice concentration
   halfway_sea_ice <- get_halfway_sea_ice_concentration(daily_sea_ice)
   
@@ -262,7 +261,7 @@ get_SI_retreat_advance_date <- function(daily_sea_ice, years, days_in_a_row) {
   # First: calculate the number of days out of days_in_a_row with ice < halfway
   retreat_days <- c()
   year <- c()
-  for (i in 2:length(daily_sea_ice)) {
+  for (i in 1:length(daily_sea_ice)) {
     year <- c(year, years[i])
     days_SI <- c()
     for (j in 1:250) {
@@ -287,7 +286,7 @@ get_SI_retreat_advance_date <- function(daily_sea_ice, years, days_in_a_row) {
   # First: calculate the number of days out of days_in_a_row with ice > halfway
   advance_days <- c()
   year <- c()
-  for (i in 2:( length(daily_sea_ice) - 1)) {
+  for (i in 1:( length(daily_sea_ice) - 1)) {
     # Here we fuse days from year i to days from year i+1 because sea ice advance 
     # sometimes occur in early year i + 1
     daily_sea_ice_i <- c(daily_sea_ice[[i]][seq(from = 250, to = length(daily_sea_ice[[i]]), by = 1)],

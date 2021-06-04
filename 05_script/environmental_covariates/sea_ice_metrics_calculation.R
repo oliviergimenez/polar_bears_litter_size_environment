@@ -21,16 +21,16 @@ Sys.setenv(LANG = "en")
 
 barents_sea_boundary_polar <- readOGR("06_processed_data/subpopulation_boundary",
                                       layer = "barents_sea_subpop_polar")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 daily_sea_ice_A <- list()
 
 # Less than 2-3min for 1991 -> 2020
 start <- Sys.time()
 for (i in 1:length(years)) {
   # Load the sea ice stack for year i
-  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/hamburg/", years[i], "/raster_stack/", # Folder name
+  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/", years[i], "/raster_stack/", # Folder name
                                               "sea_ice_raster_stack_", years[i], ".tif"))
-  load(paste0("04_raw_data/sea_ice/hamburg/", years[i], "/raster_stack/", # Load the ff matrix
+  load(paste0("04_raw_data/sea_ice/", years[i], "/raster_stack/", # Load the ff matrix
               "sea_ice_matrix_stack_2_", years[i], ".ffdata"))
   
   daily_sea_ice_year_i <- rep(NA, times = nlayers(sea_ice_stack_i)) # Initialize the daily sea ice concentration vector for year i
@@ -59,15 +59,12 @@ for (i in 1:length(years)) {
   
   daily_sea_ice_A[[i]] <- daily_sea_ice_year_i
   print(paste("done", years[i]))
-  print(Sys.time())
 }
 end <- Sys.time()
 end - start
 
 save(daily_sea_ice_A, 
      file = "06_processed_data/sea_ice_data/daily_sea_ice_barents_sea.RData")
-
-
 # The code above allows to go much faster than by cropping as usual. 
 
 
@@ -79,7 +76,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_barents_sea.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_A_2 <- interpolate(daily_sea_ice_A, years)
@@ -91,7 +88,7 @@ save(daily_sea_ice_A_2,
 # Plot
 
 daily_sea_ice_A_df <- c()
-for (k in 2:length(daily_sea_ice_A_2)) {
+for (k in 1:length(daily_sea_ice_A_2)) {
   daily_SI <- daily_sea_ice_A_2[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -169,7 +166,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_barents_sea_interpolated.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_A_3 <- correct_SI_mistakes(daily_sea_ice_A_2, years)
@@ -180,7 +177,7 @@ save(daily_sea_ice_A_3,
 
 # Plot corrected daily SI 
 daily_sea_ice_A_3_df <- c()
-for (k in 2:length(daily_sea_ice_A_3)) {
+for (k in 1:length(daily_sea_ice_A_3)) {
   daily_SI <- daily_sea_ice_A_3[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -219,7 +216,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load data
 load("06_processed_data/sea_ice_data/daily_sea_ice_barents_sea_interpolated_corrected.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_A <- get_SI_retreat_advance_date(daily_sea_ice_A_3, 
@@ -282,22 +279,22 @@ plot(svalbard.buffers.planar)
 plot(svalbard.planar,
      add = TRUE)
 
-sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/hamburg/1992/raster_stack/sea_ice_raster_stack_1992.tif")
+sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/1992/raster_stack/sea_ice_raster_stack_1992.tif")
 svalbard.buffers <- spTransform(svalbard.buffers.planar, 
                                 CRSobj = crs(sea_ice_stack)) # Re project on a sphere, in polar coordinates
 
 
 # ~~ b. Extract the daily mean sea ice concentration ---------------------------
 
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 daily_sea_ice_B <- list()
 start <- Sys.time()
 for (i in 1:length(years)) {
   # Load the sea ice stack for year i
-  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/hamburg/", years[i], 
+  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/", years[i], 
                                               "/raster_stack/", # Folder name
                                               "sea_ice_raster_stack_", years[i], ".tif"))
-  load(paste0("04_raw_data/sea_ice/hamburg/", years[i], "/raster_stack/", # Folder name
+  load(paste0("04_raw_data/sea_ice/", years[i], "/raster_stack/", # Folder name
               "sea_ice_matrix_stack_2_", years[i], ".ffdata"))
   
   daily_sea_ice_year_i <- rep(NA, times = nlayers(sea_ice_stack_i)) # Initialize the daily sea ice concentration vector for year i
@@ -338,7 +335,7 @@ save(daily_sea_ice_B,
 load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer.RData")
 
 daily_sea_ice_B_df <- c()
-for (k in 2:length(daily_sea_ice_B)) {
+for (k in 1:length(daily_sea_ice_B)) {
   daily_SI <- daily_sea_ice_B[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -403,7 +400,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_B_2 <- interpolate(daily_sea_ice_B, years)
@@ -414,7 +411,7 @@ save(daily_sea_ice_B_2,
 
 # Plot
 daily_sea_ice_B_df <- c()
-for (k in 2:length(daily_sea_ice_B_2)) {
+for (k in 1:length(daily_sea_ice_B_2)) {
   daily_SI <- daily_sea_ice_B_2[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -453,7 +450,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_B_3 <- correct_SI_mistakes(daily_sea_ice_B_2, years)
@@ -464,7 +461,7 @@ save(daily_sea_ice_B_3,
 
 # Plot corrected daily SI 
 daily_sea_ice_B_3_df <- c()
-for (k in 2:length(daily_sea_ice_B_3)) {
+for (k in 1:length(daily_sea_ice_B_3)) {
   daily_SI <- daily_sea_ice_B_3[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -493,7 +490,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 SI_retreat_advance_date_B <- get_SI_retreat_advance_date(daily_sea_ice_B_3, 
@@ -564,16 +561,16 @@ NA_cells <- Which(is.na(bath_extended), cells = TRUE)
 
 # ~~ b. Extract the daily mean sea ice concentration ---------------------------
 
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 daily_sea_ice_C <- list()
-
+plot(sea_ice_stack_i[[1]])
 start <- Sys.time()
 for (i in 1:length(years)) {
   # Load the sea ice stack for year i
-  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/hamburg/", years[i], 
+  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/", years[i], 
                                               "/raster_stack/", # Folder name
                                               "sea_ice_raster_stack_", years[i], ".tif"))
-  load(paste0("04_raw_data/sea_ice/hamburg/", years[i], "/raster_stack/", # Folder name
+  load(paste0("04_raw_data/sea_ice/", years[i], "/raster_stack/", # Folder name
               "sea_ice_matrix_stack_2_", years[i], ".ffdata"))
   
   daily_sea_ice_year_i <- rep(NA, times = nlayers(sea_ice_stack_i)) # Initialize the daily sea ice concentration vector for year i
@@ -614,7 +611,7 @@ rm(barents_sea_boundary_polar, bathymetry_barents_sea, crop.square, bath_extende
 
 
 daily_sea_ice_C_df <- c()
-for (k in 2:length(daily_sea_ice_C)) {
+for (k in 1:length(daily_sea_ice_C)) {
   daily_SI <- daily_sea_ice_C[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -639,7 +636,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_C_2 <- interpolate(daily_sea_ice_C, years)
@@ -655,7 +652,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_C_3 <- correct_SI_mistakes(daily_sea_ice_C_2, years)
@@ -665,7 +662,7 @@ save(daily_sea_ice_C_3,
 
 # Plot corrected daily SI 
 daily_sea_ice_C_3_df <- c()
-for (k in 2:length(daily_sea_ice_C_3)) {
+for (k in 1:length(daily_sea_ice_C_3)) {
   daily_SI <- daily_sea_ice_C_3[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -695,7 +692,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load data
 load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_barents_sea_interpolated_corrected.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_C <- get_SI_retreat_advance_date(daily_sea_ice_C_3, 
@@ -764,7 +761,7 @@ plot(svalbard.buffers.planar)
 plot(svalbard.planar,
      add = TRUE)
 
-sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/hamburg/1992/raster_stack/sea_ice_raster_stack_1992.tif")
+sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/1992/raster_stack/sea_ice_raster_stack_1992.tif")
 svalbard.buffers <- spTransform(svalbard.buffers.planar, 
                                 CRSobj = crs(sea_ice_stack)) # Re project on a sphere, in polar coordinates
 svalbard <- spTransform(svalbard.planar, 
@@ -773,10 +770,14 @@ svalbard <- spTransform(svalbard.planar,
 # ~~ b. Get ID of cells with <600m depth ---------------------------------------
 
 bathymetry_barents_sea <- raster("06_processed_data/bathymetry_data/ICBAO_bathymetry_polar_cropped_Barents_sea_final.tif")
+bathymetry_barents_sea_NSIDC <- raster("06_processed_data/bathymetry_data/ICBAO_bathymetry_polar_cropped_Barents_sea_NSIDC_final.tif")
 
 # As the sea ice raster stacks are not cropped following the Barents Sea boundary,
 # I need to make artificially extend the bathymetry raster to the same size, so that
-# the cell IDs that I will retrieve will be the right ones for the sea ice raster
+# the cell IDs that I will retrieve will be the right ones for the sea ice raster.
+
+# In addition, as the data for 1990 and 1991 is not the same as the data from later,
+# I need to use a specific bathymetry file (bathymetry_barents_sea_NSIDC).
 
 crop.square <- extent(-1000000, 2500000, -2000000, 1000000) # Same extent as that of the sea ice rasterstack
 bath_extended <- extend(x = bathymetry_barents_sea, 
@@ -786,19 +787,28 @@ bath_extended <- extend(x = bathymetry_barents_sea,
 shallow_cells <- Which(bath_extended >= -600, cells = TRUE)
 NA_cells <- Which(is.na(bath_extended), cells = TRUE)
 
+# For NSIDC
+bath_extended_NSIDC <- extend(x = bathymetry_barents_sea_NSIDC, 
+                              y = crop.square, 
+                              value = -5000)
+# Extract the cell with depth >= -600 or with NA
+shallow_cells_NSIDC <- Which(bath_extended_NSIDC >= -600, cells = TRUE)
+NA_cells_NSIDC <- Which(is.na(bath_extended_NSIDC), cells = TRUE)
+
 
 # ~~ c. Extract the daily mean sea ice concentration ---------------------------
 
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 daily_sea_ice_D <- list()
-
+bathymetry_name <- c("_NSIDC", "_NSIDC", 
+                     rep("", times = (length(years)-2)))
 start <- Sys.time()
 for (i in 1:length(years)) {
   # Load the sea ice stack for year i
-  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/hamburg/", years[i], 
+  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/", years[i], 
                                               "/raster_stack/", # Folder name
                                               "sea_ice_raster_stack_", years[i], ".tif"))
-  load(paste0("04_raw_data/sea_ice/hamburg/", years[i], "/raster_stack/", # Folder name
+  load(paste0("04_raw_data/sea_ice/", years[i], "/raster_stack/", # Folder name
               "sea_ice_matrix_stack_2_", years[i], ".ffdata"))
   
   daily_sea_ice_year_i <- rep(NA, times = nlayers(sea_ice_stack_i)) # Initialize the daily sea ice concentration vector for year i
@@ -810,7 +820,8 @@ for (i in 1:length(years)) {
                                                weights = TRUE,          
                                                normalizeWeights = TRUE,   
                                                sp = FALSE)[[1]]) %>%
-    filter(value %in% c(shallow_cells, NA_cells))
+    filter(value %in% c(get(paste0("shallow_cells", bathymetry_name[i])),
+                        get(paste0("NA_cells", bathymetry_name[i]))))
   
   all.days.extracted <- mat[cells_to_extract_ID[, 1], ]
   NA.list <- which(is.na(all.days.extracted[, 1]))
@@ -831,16 +842,18 @@ end - start
 save(daily_sea_ice_D, 
      file = "06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer.RData")
 
-rm(bathymetry_barents_sea, crop.square, bath_extended, buffer.size,
+rm(bathymetry_barents_sea, bathymetry_barents_sea_NSIDC,
+   crop.square, bath_extended, bath_extended_NSIDC, buffer.size,
    svalbard.buffers.planar, svalbard.buffers, svalbard.planar,
-   shallow_cells, NA_cells, correction.cnst, daily_sea_ice_year_i, raster_ID, mat, 
+   shallow_cells, NA_cells, shallow_cells_NSIDC,
+   NA_cells_NSIDC, correction.cnst, daily_sea_ice_year_i, raster_ID, mat, 
    sea_ice_stack_i, cells_to_extract_ID, NA.list, all.days.extracted, 
    all.days.extracted.clean, i, j)
 
 
 
 daily_sea_ice_D_df <- c()
-for (k in 2:length(daily_sea_ice_D)) {
+for (k in 1:length(daily_sea_ice_D)) {
   daily_SI <- daily_sea_ice_D[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -865,7 +878,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_D_2 <- interpolate(daily_sea_ice_D, years)
@@ -881,7 +894,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_D_3 <- correct_SI_mistakes(daily_sea_ice_D_2, years)
@@ -892,7 +905,7 @@ save(daily_sea_ice_D_3,
 
 # Plot corrected daily SI 
 daily_sea_ice_D_3_df <- c()
-for (k in 2:length(daily_sea_ice_D_3)) {
+for (k in 1:length(daily_sea_ice_D_3)) {
   daily_SI <- daily_sea_ice_D_3[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -923,7 +936,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load data
 load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated_corrected.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_D <- get_SI_retreat_advance_date(daily_sea_ice_D_3, 
@@ -964,7 +977,7 @@ svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around
                                    joinStyle = "ROUND",
                                    mitreLimit = 1.0)
 
-sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/hamburg/1992/raster_stack/sea_ice_raster_stack_1992.tif")
+sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/1992/raster_stack/sea_ice_raster_stack_1992.tif")
 svalbard.buffers <- spTransform(svalbard.buffers.planar, 
                                 CRSobj = crs(sea_ice_stack)) # Re project on a sphere, in polar coordinates
 svalbard <- spTransform(svalbard.planar, 
@@ -1030,7 +1043,7 @@ svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around
                                    mitreLimit = 1.0)
 
 # Reproject the buffer into polar coordinates
-sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/hamburg/1992/raster_stack/sea_ice_raster_stack_1992.tif")
+sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/1992/raster_stack/sea_ice_raster_stack_1992.tif")
 svalbard.buffers <- spTransform(svalbard.buffers.planar, 
                                 CRSobj = crs(sea_ice_stack)) # Re project on a sphere, in polar coordinates
 svalbard <- spTransform(svalbard.planar, 
@@ -1047,15 +1060,15 @@ study_area_E <- aggregate(rbind(svalbard.buffers, pelagic_bears_area_polar))
 
 # ~~ c. Extract the daily mean sea ice concentration ---------------------------
 
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 daily_sea_ice_E <- list()
 start <- Sys.time()
 for (i in 1:length(years)) {
   # Load the sea ice stack for year i
-  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/hamburg/", years[i], 
+  sea_ice_stack_i <- raster::stack(x = paste0("04_raw_data/sea_ice/", years[i], 
                                               "/raster_stack/", # Folder name
                                               "sea_ice_raster_stack_", years[i], ".tif"))
-  load(paste0("04_raw_data/sea_ice/hamburg/", years[i], "/raster_stack/", # Folder name
+  load(paste0("04_raw_data/sea_ice/", years[i], "/raster_stack/", # Folder name
               "sea_ice_matrix_stack_2_", years[i], ".ffdata"))
   
   daily_sea_ice_year_i <- rep(NA, times = nlayers(sea_ice_stack_i)) # Initialize the daily sea ice concentration vector for year i
@@ -1096,7 +1109,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_E_buffer_pelagic_area.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_E_2 <- interpolate(daily_sea_ice_E, years)
@@ -1111,7 +1124,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load the data
 load("06_processed_data/sea_ice_data/daily_sea_ice_E_buffer_pelagic_area_interpolated.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run the function
 daily_sea_ice_E_3 <- correct_SI_mistakes(daily_sea_ice_E_2, years)
@@ -1122,9 +1135,9 @@ save(daily_sea_ice_E_3,
 
 
 # Plot corrected daily SI
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 daily_sea_ice_E_3_df <- c()
-for (k in 2:length(daily_sea_ice_E_3)) {
+for (k in 1:length(daily_sea_ice_E_3)) {
   daily_SI <- daily_sea_ice_E_3[[k]]
   day_nbr <- seq(from = 1, to = length(daily_SI), by = 1)
   year <- rep(years[k], times = length(daily_SI))
@@ -1154,7 +1167,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load data
 load("06_processed_data/sea_ice_data/daily_sea_ice_E_buffer_pelagic_area_interpolated_corrected.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_E <- get_SI_retreat_advance_date(daily_sea_ice_E_3, 
@@ -1192,7 +1205,7 @@ svalbard.buffers.planar <- gBuffer(svalbard.planar, # generate the buffer around
                                    joinStyle = "ROUND",
                                    mitreLimit = 1.0)
 
-sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/hamburg/1992/raster_stack/sea_ice_raster_stack_1992.tif")
+sea_ice_stack <- raster::stack(x = "04_raw_data/sea_ice/1992/raster_stack/sea_ice_raster_stack_1992.tif")
 svalbard.buffers <- spTransform(svalbard.buffers.planar, 
                                 CRSobj = crs(sea_ice_stack)) # Re project on a sphere, in polar coordinates
 svalbard <- spTransform(svalbard.planar, 
@@ -1241,7 +1254,7 @@ source("05_script/environmental_covariates/sea_ice_metrics_calculation_functions
 
 # Load data
 load("06_processed_data/sea_ice_data/daily_sea_ice_100km_buffer_interpolated_corrected.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
+years <- seq(from = 1990, to = 2020, by = 1)
 
 # Run function
 SI_retreat_advance_date_F <- get_SI_retreat_advance_date_any_threshold(daily_sea_ice_B_3, 
