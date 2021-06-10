@@ -341,23 +341,6 @@ for (i in 1:length(years)) {
 end <- Sys.time()
 
 
-# raster_1990 <- raster::stack("04_raw_data/sea_ice/1990/raster_stack/sea_ice_raster_stack_1990.tif")
-# raster_1990_01_01 <- raster_1990@layers[[1]]
-# 
-# raster_1992 <- raster::stack("04_raw_data/sea_ice/1992/raster_stack/sea_ice_raster_stack_1992.tif")
-# raster_1992_01_01 <- raster_1992@layers[[1]]
-# 
-# plot(raster_1990_01_01)
-# plot(raster_1992_01_01)
-
-
-
-
-
-
-
-
-
 
 
 
