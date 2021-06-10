@@ -410,7 +410,7 @@ ggsave("07_results/01_interim_results/polar_bear_data_exploration/06-09 proporti
 
 
 
-# Plot the position of the carcasses ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Plot the position of the captures ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 library(raster)
 library(tmap)
 
