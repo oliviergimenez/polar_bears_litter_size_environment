@@ -609,6 +609,7 @@ ggsave(filename = "07_results/01_interim_results/model_outputs/several_predictor
 
 
 
+
 # ~~~~~~~~~ Day of capture -----------------------------------
 
 # Median day of capture ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
