@@ -1,8 +1,8 @@
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#==============================================================================#
 #                                                                              #
-#                     Data processing + visualization                          #
+#                Polar bear CR data processing + visualization                 #
 #                                                                              #
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#==============================================================================#
 
 library(tidyverse)
 library(lubridate)
@@ -98,13 +98,13 @@ plot_1 <- capture_data_females_w_cubs %>%
        y = "Mean litter size")
 )
 
-ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 mean litter size VS years.png",
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 mean litter size VS years.png",
        plot = plot_1, width = 6, height = 6, units = "cm")
 
  
 (plot_1_2 <- capture_data_females_w_cubs %>%
-    mutate(CUB_NUMBER = as.numeric(CUB_NUMBER)) %>%
-    ggplot(aes(x = as.numeric(YEAR), y = CUB_NUMBER)) +
+    mutate(cub_number = as.numeric(cub_number)) %>%
+    ggplot(aes(x = as.numeric(YEAR), y = cub_number)) +
     geom_jitter(width = 0.25,
                 height = 0.15) +
     geom_smooth(method = lm) +
@@ -113,13 +113,13 @@ ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 mean litte
          y = "Litter size")
 )
 
-ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 jitter litter size VS years.png",
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 jitter litter size VS years.png",
        plot = plot_1_2, width = 6, height = 6, units = "cm")
 
 
 (
 plot_1_3 <- capture_data_females_w_cubs %>%
-  ggplot(aes(x = YEAR, fill = as.factor(CUB_NUMBER))) +
+  ggplot(aes(x = YEAR, fill = as.factor(cub_number))) +
   geom_bar() +
   scale_fill_grey(start = 0.8, end = 0.2) +
   theme_classic() +
@@ -128,7 +128,7 @@ plot_1_3 <- capture_data_females_w_cubs %>%
        fill = "Litter size")
 )
 
-ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 barplot litter size VS years.png",
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 barplot litter size VS years.png",
        plot = plot_1_3, width = 8, height = 6, units = "cm")
 
 
@@ -140,7 +140,7 @@ data.temp <- capture_data_females_w_cubs %>%
   summarise(nbr_captures = sum(data_point))
 
 data.temp.2 <- capture_data_females_w_cubs %>%
-  count(CUB_NUMBER, YEAR)
+  count(cub_number, YEAR)
 
 percentage <- rep(NA, times = nrow(data.temps.2))
 for (k in 1:nrow(data.temps.2)) {
@@ -153,7 +153,7 @@ data.temp.3 <- data.frame(data.temp.2,
 
 
 (plot_1_4 <- ggplot() +
-  geom_col(data = data.temp.3, aes(x = YEAR, y = proportion, fill = as.factor(CUB_NUMBER))) +
+  geom_col(data = data.temp.3, aes(x = YEAR, y = proportion, fill = as.factor(cub_number))) +
   geom_text(data = data.temp, 
             aes(x = YEAR, y = 1.05, label = nbr_captures),
             size = 3) +
@@ -165,7 +165,7 @@ data.temp.3 <- data.frame(data.temp.2,
 )
 
 
-ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 barplot proportion litter size VS years.png",
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 barplot proportion litter size VS years.png",
        plot = plot_1_4, width = 8, height = 6, units = "cm")
 
 rm(data.temp,
@@ -256,7 +256,7 @@ rm(data.temp,
 
 # Litter size VS on day capture
 (plot_5 <- capture_data_females_w_cubs %>%
-    ggplot(aes(x = as.factor(CUB_NUMBER), y = DAY_NUMBER)) +
+    ggplot(aes(x = as.factor(cub_number), y = DAY_NUMBER)) +
     geom_violin() +
     geom_boxplot(width=0.1) +
     geom_jitter(width = 0.25) +
@@ -265,13 +265,13 @@ rm(data.temp,
          y = "Day")
 )
 
-ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 litter size VS day capture.png",
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 litter size VS day capture.png",
        plot = plot_5, width = 6, height = 6, units = "cm")
 
 
 # Litter size VS mother's age
 (plot_6 <- capture_data_females_w_cubs %>%
-    ggplot(aes(x = as.factor(CUB_NUMBER), y = AGE_FOR_ANALYSES)) +
+    ggplot(aes(x = as.factor(cub_number), y = AGE_FOR_ANALYSES)) +
     geom_violin() +
     geom_boxplot(width=0.1) +
     geom_jitter(width = 0.25) +
@@ -280,13 +280,13 @@ ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 litter siz
          y = "Mother's age")
 )
 
-ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 litter size VS mother's age.png",
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 litter size VS mother's age.png",
        plot = plot_6, width = 6, height = 6, units = "cm")
 
 
 # Litter size VS mother's size
 (plot_7 <- capture_data_females_w_cubs %>%
-    ggplot(aes(x = as.factor(CUB_NUMBER), y = S_LENGTH)) +
+    ggplot(aes(x = as.factor(cub_number), y = S_LENGTH)) +
     geom_violin() +
     geom_boxplot(width=0.1) +
     geom_jitter(width = 0.25) +
@@ -295,13 +295,13 @@ ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 litter siz
          y = "Mother's length")
 )
 
-ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 litter size VS mother's size.png",
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 litter size VS mother's size.png",
        plot = plot_7, width = 6, height = 6, units = "cm")
 
 
 # Litter size VS date of capture
 (plot_8 <- capture_data_females_w_cubs %>%
-    ggplot(aes(x = as.factor(CUB_NUMBER), y = DAY_NUMBER)) +
+    ggplot(aes(x = as.factor(cub_number), y = DAY_NUMBER)) +
     geom_violin() +
     geom_boxplot(width=0.1) +
     geom_jitter(width = 0.25) +
@@ -313,7 +313,104 @@ ggsave("7_results/1_interim_results/polar_bear_data_exploration/03-04 litter siz
 
 
 
-# Plot the position of the carcasses +++++++++++++++++++++
+
+
+
+
+
+# Proportion of females with no cubs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+capture_data_females <- read.csv("06_processed_data/CR_data/CR_f_clean.csv")
+
+ggplot(capture_data_females, aes(x = year, fill = cub_status)) +
+  geom_histogram()
+
+
+data.temp <- capture_data_females %>%
+  mutate(data_point = 1) %>%
+  group_by(year) %>%
+  summarise(nbr_captures = sum(data_point))
+
+data.temp.2 <- capture_data_females %>%
+  count(cub_status, year)
+
+percentage <- rep(NA, times = nrow(data.temp.2))
+for (k in 1:nrow(data.temp.2)) {
+  percentage[k] <- data.temp.2$n[k]/data.temp$nbr_captures[data.temp$year == data.temp.2$year[k]]
+}
+data.temp.3 <- data.frame(data.temp.2,
+                          proportion = percentage)
+data.temp.4 <- data.temp.3[data.temp.3$cub_status == "n", ]
+
+# Bar plot
+(plot_9 <- ggplot() +
+    geom_col(data = data.temp.3, aes(x = year, y = 100*proportion, fill = cub_status)) +
+    scale_fill_grey(start = 0.8, end = 0.2,
+                    labels = c("with CoY", "alone")) +
+    theme_classic() +
+    labs(x = "Year",
+         y = "Percentage",
+         fill = "") +
+    theme_bw()
+)
+
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/06-09 proportion of females with and without cubs.png",
+       plot = plot_9, width = 7, height = 4)
+
+# Line plot
+data.temp.4 <- data.temp.3[data.temp.3$cub_status == "n", ]
+x <- lm(proportion ~ year, data = data.temp.4)
+summary(x)
+
+lm_eqn <- function(df){
+  m <- lm(100*proportion ~ year, data = data.temp.4)
+  eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+                   list(a = format(unname(coef(m)[1]), digits = 2),
+                        b = format(unname(coef(m)[2]), digits = 2),
+                        r2 = format(summary(m)$r.squared, digits = 3)))
+  as.character(as.expression(eq))
+}
+
+(plot_10 <- ggplot(data = data.temp.4, aes(x = year, y = 100*proportion)) +
+    geom_line() +
+    geom_smooth(method = lm) +
+    geom_text(x = 2000, y = 85, label = lm_eqn(data.temp.4), parse = TRUE) +
+    theme_classic() +
+    labs(x = "Year",
+         y = "Percentage",
+         fill = "") +
+    theme_bw()
+)
+
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/06-09 proportion of females with and without cubs line.png",
+       plot = plot_10, width = 6, height = 4)
+
+
+
+
+data.temp.5 <- data.temp.4[data.temp.4$year > 1999, ]
+x <- lm(proportion ~ year, data = data.temp.5)
+summary(x)
+
+(plot_10 <- ggplot(data = data.temp.5, aes(x = year, y = 100*proportion)) +
+    geom_line() +
+    geom_smooth(method = lm) +
+    geom_text(x = 2005, y = 85, label = lm_eqn(data.temp.5), parse = TRUE) +
+    theme_classic() +
+    labs(x = "Year",
+         y = "Percentage",
+         fill = "") +
+    theme_bw()
+)
+
+ggsave("07_results/01_interim_results/polar_bear_data_exploration/06-09 proportion of females with and without cubs line from 2000.png",
+       plot = plot_10, width = 6, height = 4)
+
+
+
+
+
+# Plot the position of the carcasses ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 library(raster)
 library(tmap)
 
@@ -360,7 +457,7 @@ ggplot() +
 
 ggsave("10_meetings/2021-04-09 Meeting with Sarah/map_captures.png",
        width = 12, height = 8)
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 # Jon's explanations in his email from 19-02-2021 ------------------------------
