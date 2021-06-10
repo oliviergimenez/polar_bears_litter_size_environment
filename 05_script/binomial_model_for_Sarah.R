@@ -60,13 +60,25 @@ n <- data_model %>%
 dat <- list(y = as.numeric(y))
 
 # Load the JAGS models + the ancillary functions
-source("05_script/models/1_sea_ice/1.1_Nimble_ice_free_days.R")
 source("05_script/models/functions_for_models_Nimble.R")
 
 
 # RUN MODELS ===================================================================
 
 # A. Null model ================================================================
+
+model_0.0.0.0_binomial <- nimbleCode({
+  for(i in 1:N) {
+    y[i] ~ dbin(p[i], n[i])
+    logit(p[i]) <- b0
+  }
+  for (i in 1:nbyear) {
+    eps1[i] ~ dnorm(0, sd = sigma1)
+  }
+  sigma1 ~ dunif(0, 10)
+  b0 ~ dnorm(0.00000E+00, sd = 1.5)
+  b1 ~ dnorm(0.00000E+00, sd = 1.5)
+})
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
@@ -170,6 +182,20 @@ diagnostic_plot
 
 
 # B. Model with only ice-free days =============================================
+
+model_1.1.2_D_binomial <- nimbleCode({
+  for(i in 1:N) {
+    y[i] ~ dbin(p[i], n[i])
+    logit(p[i]) <- b0 + b1 * ice_free_days_previous_s[i] + eps1[year[i]]
+  }
+  for (i in 1:nbyear) {
+    eps1[i] ~ dnorm(0, sd = sigma1)
+  }
+  sigma1 ~ dunif(0.00000E+00, 10)
+  b0 ~ dnorm(0.00000E+00, sd = 10)
+  b1 ~ dnorm(0.00000E+00, sd = 10)
+})
+
 
 # ~~~ a. Run the model ---------------------------------------------------------
 

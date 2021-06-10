@@ -46,13 +46,15 @@ model_0.0.0.0_binomial <- nimbleCode({
 
 
 
-get_coefs_and_params <- function(y, var_scaled, effect, mode) {
+
+
+get_coefs_and_params <- function(y, var_scaled, effect) {
   temp.dat <- data.frame(y = y, var_scaled = var_scaled)
   temp.dat$yfac <- as.factor(temp.dat$y)   # Ajout de Y en facteur
   mnl.dat <- mlogit.data(temp.dat, varying = NULL, choice = "yfac", shape = "wide") 
   mlogit.mod <- mlogit(yfac ~ 1| var_scaled, 
                        data = mnl.dat, 
-                       reflevel = ifelse(mode == "_bis", "1", "0"))
+                       reflevel = "0")
   
   all_coefs <- as.vector(summary(mlogit.mod)$coefficients)
   
@@ -139,7 +141,6 @@ save_wAIC_null_model <- function(model_code) {
   print(round(wAIC, 3))
   return(wAIC_table)
 }
-
 
 
 save_wAIC <- function(model_code, var_short_name, effect) {
@@ -511,9 +512,9 @@ check_convergence_several_predictors <- function(params.plot, nimble_output) {
 
 
 
-get_probabilities <- function(model_code, effect, mode, var_scaled, var) { 
-  res <- rbind(get(paste0("fit_", model_code, "_effect_", effect, mode))$samples$chain1,
-               get(paste0("fit_", model_code, "_effect_", effect, mode))$samples$chain2)
+get_probabilities <- function(model_code, effect, var_scaled, var) { 
+  res <- rbind(get(paste0("fit_", model_code, "_effect_", effect))$samples$chain1,
+               get(paste0("fit_", model_code, "_effect_", effect))$samples$chain2)
   
   # Create grid of x values
   range <- range(var_scaled)

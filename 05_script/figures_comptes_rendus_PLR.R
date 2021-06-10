@@ -523,7 +523,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
                          model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
-# + 8. Model output only ice-free-days starting 2000 --------------------------------
+# + 8. Model output only ice-free-days starting 2000 ---------------------------
 
 CR_data <- read_csv("06_processed_data/CR_data/CR_f_clean.csv")
 
