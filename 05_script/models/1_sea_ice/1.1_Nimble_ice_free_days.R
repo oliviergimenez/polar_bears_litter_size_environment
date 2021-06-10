@@ -6,9 +6,9 @@
 
 
 # A. Ice-free day t-1 ==========================================================
-# ~ 1. Ice-free days t-1: effect 1c_VS_0c (1.1.2_E) ============================
+# ~ 1. Ice-free days t-1: effect 1c_VS_0c (1.1.2_D) ============================
 
-model_1.1.2_E_effect_1c_VS_0c <- nimbleCode({
+model_1.1.2_D_effect_1c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -33,9 +33,9 @@ model_1.1.2_E_effect_1c_VS_0c <- nimbleCode({
 })
 
 
-# ~ 2. Ice-free days t-1: effect 2-3c_VS_0c (1.1.2_E) =============================
+# ~ 2. Ice-free days t-1: effect 2-3c_VS_0c (1.1.2_D) =============================
 
-model_1.1.2_E_effect_2_3c_VS_0c <- nimbleCode({
+model_1.1.2_D_effect_2_3c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -59,9 +59,9 @@ model_1.1.2_E_effect_2_3c_VS_0c <- nimbleCode({
   b1 ~ dnorm(0.00000E+00, sd = 10)
 })
 
-# ~ 3. Ice-free days t-1: effect common (1.1.2_E) =============================
+# ~ 3. Ice-free days t-1: effect common (1.1.2_D) =============================
 
-model_1.1.2_E_effect_common <- nimbleCode({
+model_1.1.2_D_effect_common <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -85,9 +85,9 @@ model_1.1.2_E_effect_common <- nimbleCode({
   a1 ~ dnorm(0.00000E+00, sd = 10)
 })
 
-# ~ 4. Ice-free days t-1: effect distinct (1.1.2_E) =============================
+# ~ 4. Ice-free days t-1: effect distinct (1.1.2_D) =============================
 
-model_1.1.2_E_effect_distinct <- nimbleCode({
+model_1.1.2_D_effect_distinct <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -120,7 +120,7 @@ model_1.1.2_E_effect_distinct <- nimbleCode({
 
 # ~ 5. Ice-free days t-1: binomial =============================================
 
-model_1.1.2_E_binomial <- nimbleCode({
+model_1.1.2_D_binomial <- nimbleCode({
   for(i in 1:N) {
     y[i] ~ dbin(p[i], n[i])
     logit(p[i]) <- b0 + b1 * ice_free_days_previous_s[i] + eps1[year[i]]
@@ -138,9 +138,9 @@ model_1.1.2_E_binomial <- nimbleCode({
 
 
 # B. Ice-free day t-2 ==========================================================
-# ~ 1. Ice-free days t-2: effect 1c_VS_0c (1.1.3_E) ==============================
+# ~ 1. Ice-free days t-2: effect 1c_VS_0c (1.1.3_D) ==============================
 
-model_1.1.3_E_effect_1c_VS_0c <- nimbleCode({
+model_1.1.3_D_effect_1c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -165,9 +165,9 @@ model_1.1.3_E_effect_1c_VS_0c <- nimbleCode({
 })
 
 
-# ~ 2. Ice-free days t-2: effect 2-3c_VS_0c (1.1.3_E) =============================
+# ~ 2. Ice-free days t-2: effect 2-3c_VS_0c (1.1.3_D) =============================
 
-model_1.1.3_E_effect_2_3c_VS_0c <- nimbleCode({
+model_1.1.3_D_effect_2_3c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -191,9 +191,9 @@ model_1.1.3_E_effect_2_3c_VS_0c <- nimbleCode({
   b1 ~ dnorm(0.00000E+00, sd = 10)
 })
 
-# ~ 3. Ice-free days t-2: effect common (1.1.3_E) =============================
+# ~ 3. Ice-free days t-2: effect common (1.1.3_D) =============================
 
-model_1.1.3_E_effect_common <- nimbleCode({
+model_1.1.3_D_effect_common <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
@@ -217,9 +217,9 @@ model_1.1.3_E_effect_common <- nimbleCode({
   a1 ~ dnorm(0.00000E+00, sd = 10)
 })
 
-# ~ 4. Ice-free days t-2: effect distinct (1.1.3_E) =============================
+# ~ 4. Ice-free days t-2: effect distinct (1.1.3_D) =============================
 
-model_1.1.3_E_effect_distinct <- nimbleCode({
+model_1.1.3_D_effect_distinct <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])

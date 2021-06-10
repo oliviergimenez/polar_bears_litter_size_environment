@@ -6,7 +6,7 @@
 
 
 # Null model -------------------------------------------------------------------
-null_model <- nimbleCode({
+model_0.0.0.0 <- nimbleCode({
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
@@ -30,7 +30,7 @@ null_model <- nimbleCode({
 
 # Null model binomial ----------------------------------------------------------
 
-null_model_binomial <- nimbleCode({
+model_0.0.0.0_binomial <- nimbleCode({
   for(i in 1:N) {
     y[i] ~ dbin(p[i], n[i])
     logit(p[i]) <- b0
@@ -82,6 +82,115 @@ get_coefs_and_params <- function(y, var_scaled, effect, mode) {
   return(list(coefs = coefs,
               params = params))
 }
+
+
+# Create the wAIC table 
+# /!\ do not run it again or it will erase all the saved wAIC values !! 
+# Changed the name of the file just in case
+# wAIC_table <- data.frame(model_code = NA, 
+#                          variable = NA,
+#                          effect = NA,
+#                          wAIC_1 = NA,
+#                          wAIC_2 = NA,
+#                          wAIC_3 = NA,
+#                          wAIC_4 = NA,
+#                          wAIC_5 = NA) %>%
+#   filter(!is.na(variable))
+# write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table_new.csv")
+
+save_wAIC_null_model <- function(model_code) {
+  wAIC_table <- read_csv("07_results/01_interim_results/model_outputs/wAIC_table.csv", 
+                         col_types = cols(wAIC_1 = col_character(),
+                                          wAIC_2 = col_character(), 
+                                          wAIC_3 = col_character(), 
+                                          wAIC_4 = col_character(), 
+                                          wAIC_5 = col_character()))
+  wAIC <- get(paste0("fit_", model_code))$WAIC
+  row <- which(wAIC_table$model_code == model_code)
+  if (length(row) == 1) {
+    column.wAIC.to.fill <- which(is.na(wAIC_table[row, ]))
+    if (length(column.wAIC.to.fill) > 0) {
+      wAIC_table[row, min(column.wAIC.to.fill)] <- as.character(round(wAIC, 3))
+    }
+  }
+  if (length(row) == 0) {
+    row.to.add <- c(model_code, "none", "none (multinomial)", as.character(round(wAIC, 3)), NA, NA, NA, NA)
+    wAIC_table <- rbind(wAIC_table,
+                        row.to.add) %>%
+      arrange(model_code) 
+    colnames(wAIC_table) <- c("model_code", "variable", "effect", "wAIC_1", 
+                              "wAIC_2", "wAIC_3", "wAIC_4", "wAIC_5")
+    
+  }
+  # Remove potential duplicated values
+  for (i in 1:nrow(wAIC_table)) {
+    x <- as.numeric(as.vector(wAIC_table[i, c("wAIC_1",            # Keep only the columns with the wAIC
+                                              "wAIC_2", "wAIC_3", "wAIC_4", "wAIC_5")]))
+    
+    y <- x[-which(is.na(x))]         # Remove the columns with NAs among the wAIC columns
+    
+    new.wAIC.columns <- unique(y)
+    new.k.row <- c(new.wAIC.columns, rep(NA, times = 5 - length(new.wAIC.columns)))
+    for (j in 1:5) {
+      wAIC_table[i, j + 3] <- as.character(new.k.row[j])
+    }
+  }
+  # print(paste0("wAIC: ", round(wAIC, 3)))
+  print(round(wAIC, 3))
+  return(wAIC_table)
+}
+
+
+
+save_wAIC <- function(model_code, var_short_name, effect) {
+  # wAIC_table <- read_csv("07_results/01_interim_results/model_outputs/wAIC_table.csv", 
+  #                        col_types = cols(wAIC_1 = col_double(),
+  #                                         wAIC_2 = col_double(), 
+  #                                         wAIC_3 = col_double(), 
+  #                                         wAIC_4 = col_double(), 
+  #                                         wAIC_5 = col_double()))
+  wAIC_table <- read_csv("07_results/01_interim_results/model_outputs/wAIC_table.csv", 
+                         col_types = cols(wAIC_1 = col_character(),
+                                          wAIC_2 = col_character(), 
+                                          wAIC_3 = col_character(), 
+                                          wAIC_4 = col_character(), 
+                                          wAIC_5 = col_character()))
+  wAIC <- get(paste0("fit_", model_code, "_effect_", effect))$WAIC
+  row <- which(wAIC_table$model_code == model_code & wAIC_table$effect == effect)
+  if (length(row) == 1) {
+    column.wAIC.to.fill <- which(is.na(wAIC_table[row, ]))
+    if (length(column.wAIC.to.fill) > 0) {
+      wAIC_table[row, min(column.wAIC.to.fill)] <- as.character(round(wAIC, 3))
+    }
+  }
+  if (length(row) == 0) {
+    row.to.add <- c(model_code, substr(var_short_name, 0, nchar(var_short_name)-2), 
+                    effect, as.character(round(wAIC, 3)), NA, NA, NA, NA)
+    wAIC_table <- rbind(wAIC_table,
+                        row.to.add) %>%
+      arrange(model_code) 
+    colnames(wAIC_table) <- c("model_code", "variable", "effect", "wAIC_1", 
+                              "wAIC_2", "wAIC_3", "wAIC_4", "wAIC_5")
+    
+  }
+  # Remove potential duplicated values
+  for (i in 1:nrow(wAIC_table)) {
+    x <- as.numeric(as.vector(wAIC_table[i, c("wAIC_1",            # Keep only the columns with the wAIC
+                                              "wAIC_2", "wAIC_3", "wAIC_4", "wAIC_5")]))
+    
+    y <- x[-which(is.na(x))]         # Remove the columns with NAs among the wAIC columns
+    
+    new.wAIC.columns <- unique(y)
+    new.k.row <- c(new.wAIC.columns, rep(NA, times = 5 - length(new.wAIC.columns)))
+    for (j in 1:5) {
+      wAIC_table[i, j + 3] <- as.character(new.k.row[j])
+    }
+  }
+  # print(paste0("wAIC: ", round(wAIC, 3)))
+  print(round(wAIC, 3))
+  return(wAIC_table)
+}
+
 
 
 
@@ -276,11 +385,11 @@ check_convergence <- function(params, effect, model_code) {
   
   # Process Nimble output into dataframe
   chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
-    select(params[-length(params)]) %>%
+    dplyr::select(params[-length(params)]) %>%
     mutate(chain = "1",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
   chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
-    select(params[-length(params)]) %>%
+    dplyr::select(params[-length(params)]) %>%
     mutate(chain = "2",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
   chains <- rbind(chain1, chain2) 
@@ -344,11 +453,11 @@ check_convergence <- function(params, effect, model_code) {
 check_convergence_several_predictors <- function(params.plot, nimble_output) {
   # Process Nimble output into dataframe
   chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
-    select(params.plot) %>%
+    dplyr::select(params.plot) %>%
     mutate(chain = "1",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
   chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
-    select(params.plot) %>%
+    dplyr::select(params.plot) %>%
     mutate(chain = "2",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
   chains <- rbind(chain1, chain2) 
@@ -357,7 +466,7 @@ check_convergence_several_predictors <- function(params.plot, nimble_output) {
   
   param.mean <- chains_l %>%
     group_by(parameter, chain) %>%
-    summarize(m = mean(value))
+    summarise(m = mean(value))
   
   param.running.mean <- chains_l %>%
     arrange(parameter, iteration) %>%

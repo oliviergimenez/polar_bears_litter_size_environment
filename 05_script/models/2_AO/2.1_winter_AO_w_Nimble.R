@@ -10,6 +10,8 @@ library(viridis)
 library(ggmcmc)
 library(gridExtra)
 library(nimble)
+library(MCMCvis)
+library(cowplot)
 Sys.setenv(LANG = "en")
 
 # READY VARIABLES ===========================================================
@@ -67,14 +69,8 @@ source("05_script/models/functions_for_models_Nimble.R")
 
 # A. Null model ================================================================
 
-model_code <- "null_model"
-mode <- ""
+# see in 1.1_ice_free_days_w_Nimble.R
 
-load(file = paste0("07_results/01_interim_results/model_outputs/", 
-                   model_code, toupper(mode), ".RData"))
-
-get(paste0("fit_", model_code, mode))$WAIC
-# 1083.937
 
 # B. Winter AO t ===============================================================
 
@@ -134,9 +130,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.493
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -144,8 +140,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -183,7 +180,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -250,8 +247,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.146
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -260,8 +258,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -297,7 +296,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -364,8 +363,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -373,8 +373,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -411,7 +412,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -481,8 +482,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -491,8 +493,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -529,7 +532,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -591,8 +594,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1117.115
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -600,8 +604,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -639,7 +644,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -711,8 +716,9 @@ end - start
 
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.878
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -721,9 +727,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -759,7 +765,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -829,8 +835,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -838,9 +845,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -876,7 +883,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -945,8 +952,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1082.624
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -993,7 +1001,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1062,8 +1070,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.101
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1071,8 +1080,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1110,7 +1120,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1181,10 +1191,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1114.975
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1193,8 +1202,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1230,7 +1240,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1300,8 +1310,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.022
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1309,8 +1320,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1347,7 +1359,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1421,8 +1433,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.167
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1431,8 +1444,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1469,7 +1483,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1535,8 +1549,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.677
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1544,8 +1559,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1583,7 +1599,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1653,10 +1669,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1113.717
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1665,8 +1680,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1703,7 +1719,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1773,8 +1789,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1114.756
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1782,8 +1799,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1821,7 +1839,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1894,8 +1912,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.076
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1904,8 +1923,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1943,7 +1963,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2011,8 +2031,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1117.097
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2021,10 +2042,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2060,7 +2080,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2131,10 +2151,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1084.646
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2143,10 +2162,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2182,7 +2200,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -2250,10 +2268,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1083.797
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2262,10 +2279,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2301,7 +2317,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2375,10 +2391,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1085.799
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2387,10 +2402,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2426,7 +2440,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2495,8 +2509,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.604
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
@@ -2505,9 +2520,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2544,7 +2559,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2614,10 +2629,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2626,8 +2640,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -2664,7 +2679,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2734,8 +2749,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2743,8 +2759,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -2782,7 +2799,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2855,8 +2872,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.835
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2865,8 +2883,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -2904,7 +2923,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 

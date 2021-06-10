@@ -10,6 +10,8 @@ library(viridis)
 library(ggmcmc)
 library(gridExtra)
 library(nimble)
+library(MCMCvis)
+library(cowplot)
 Sys.setenv(LANG = "en")
 
 # READY VARIABLES ===========================================================
@@ -55,13 +57,7 @@ summary(y)
   id_fem
 }
 
-N <- length(y) # nb of reproductive events
-J <- length(levels(y)) # number of categories
-
-my.constants <- list(N = length(y), # nb of females captured
-                     J = length(levels(y)),
-                     year = as.numeric(year),
-                     nbyear = nbyear) 
+dat <- list(y = as.numeric(y))
 
 # Load the JAGS models + the ancillary functions
 source("05_script/models/3_NAO/3.1_Nimble_winter_NAO.R")
@@ -73,14 +69,8 @@ source("05_script/models/functions_for_models_Nimble.R")
 
 # A. Null model ================================================================
 
-model_code <- "null_model"
-mode <- ""
+# see in 1.1_ice_free_days_w_Nimble.R
 
-load(file = paste0("07_results/01_interim_results/model_outputs/", 
-                   model_code, toupper(mode), ".RData"))
-
-get(paste0("fit_", model_code, mode))$WAIC
-# 1083.937
 
 # B. Winter NAO t ===============================================================
 
@@ -100,10 +90,17 @@ var_full_name <- "Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -136,8 +133,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.816
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -145,8 +143,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -184,7 +183,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -211,10 +210,17 @@ var_full_name <- "Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -247,8 +253,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.146
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -257,8 +264,10 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
+
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -294,7 +303,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -320,10 +329,16 @@ var_full_name <- "Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -357,8 +372,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -366,8 +382,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -404,7 +421,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -433,10 +450,17 @@ var_full_name <- "Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -470,8 +494,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -480,8 +505,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -518,7 +544,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -541,10 +567,17 @@ var_full_name <- "Phase of the Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -576,8 +609,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1117.115
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -585,8 +619,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -624,7 +659,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -650,10 +685,16 @@ var_full_name <- "Phase of the Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -687,10 +728,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.878
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -699,8 +739,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -737,7 +778,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -763,10 +804,17 @@ var_full_name <- "Phase of the Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -800,8 +848,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -809,8 +858,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -847,7 +897,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -872,10 +922,16 @@ var_full_name <- "Phase of the Winter NAO"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -909,8 +965,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1082.624
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -919,8 +976,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -957,7 +1015,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -983,10 +1041,17 @@ var_full_name <- "Winter NAO in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1018,9 +1083,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.406
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1028,8 +1093,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1067,7 +1133,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1094,10 +1160,15 @@ var_full_name <- "Winter NAO in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
-}
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1130,11 +1201,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1114.781
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1143,8 +1212,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1180,7 +1250,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1206,10 +1276,15 @@ var_full_name <- "Winter NAO in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
-}
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1243,10 +1318,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.16
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1254,8 +1328,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1292,7 +1367,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1321,10 +1396,15 @@ var_full_name <- "Winter NAO in previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1358,11 +1438,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.843
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1371,8 +1449,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1409,7 +1488,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -1432,10 +1511,15 @@ var_full_name <- "Phase of the Winter NAO during previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1467,8 +1551,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.25
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1476,8 +1561,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1515,7 +1601,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1541,10 +1627,16 @@ var_full_name <- "Phase of the Winter NAO during previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1578,10 +1670,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.799
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1590,8 +1681,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1628,7 +1720,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1654,10 +1746,16 @@ var_full_name <- "Phase of the Winter NAO during previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1691,8 +1789,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1115.9
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1700,8 +1799,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1739,7 +1839,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1768,10 +1868,16 @@ var_full_name <- "Phase of the Winter NAO during previous year"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1805,8 +1911,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.915
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1815,9 +1922,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1854,7 +1961,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1880,10 +1987,16 @@ var_full_name <- "Winter NAO two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -1915,8 +2028,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.826
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1925,9 +2039,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -1964,7 +2078,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1992,10 +2106,16 @@ var_full_name <- "Winter NAO two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -2030,8 +2150,9 @@ end - start
 
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1084.646
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2040,8 +2161,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -2079,7 +2201,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -2104,10 +2226,16 @@ var_full_name <- "Winter NAO two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -2142,8 +2270,9 @@ end - start
 
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1083.797
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2152,8 +2281,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -2191,7 +2321,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2220,10 +2350,16 @@ var_full_name <- "Winter NAO two years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -2260,8 +2396,9 @@ end - start
 
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1085.799
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2270,8 +2407,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 
@@ -2309,7 +2447,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
                    paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2335,10 +2473,16 @@ var_full_name <- "Phase of the Winter NAO 2 years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -2371,8 +2515,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.179
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
@@ -2381,8 +2526,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -2420,7 +2566,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2446,10 +2592,16 @@ var_full_name <- "Phase of the Winter NAO 2 years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -2482,11 +2634,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv") 
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2495,8 +2645,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -2533,7 +2684,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2559,10 +2710,16 @@ var_full_name <- "Phase of the Winter NAO 2 years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -2596,8 +2753,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2605,9 +2763,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
-
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2644,7 +2802,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -2673,10 +2831,16 @@ var_full_name <- "Phase of the Winter NAO 2 years before"
 # Are females without cubs taken into account ?
 mode <- ""       # Yes
 # mode <- "_bis"  # No
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
 }
 
-dat <- list(as.numeric(y), as.numeric(var_scaled))
-names(dat) <- c("y", var_short_name)
+  
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
@@ -2710,8 +2874,9 @@ assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1116.835
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -2720,8 +2885,9 @@ save(list = paste0("fit_", model_code, "_effect_", effect, mode),
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
@@ -2759,7 +2925,7 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
             paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 

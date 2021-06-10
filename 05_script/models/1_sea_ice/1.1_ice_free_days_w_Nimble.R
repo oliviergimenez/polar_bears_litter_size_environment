@@ -19,7 +19,7 @@ Sys.setenv(LANG = "en")
 CR_data <- read_csv("06_processed_data/CR_data/CR_f_clean.csv")
 
 # Sea ice data
-sea_ice_data <- read_csv("06_processed_data/sea_ice_data/retreat_advance_ice_free_days_E.csv")
+sea_ice_data <- read_csv("06_processed_data/sea_ice_data/retreat_advance_ice_free_days_D.csv")
 sea_ice_data <- data.frame(sea_ice_data,
                            ice_free_days_previous = c(NA, sea_ice_data$ice_free_days[-nrow(sea_ice_data)]),
                            ice_free_days_2y_prior = c(NA, NA, sea_ice_data$ice_free_days[-c(nrow(sea_ice_data),
@@ -29,9 +29,7 @@ sea_ice_data <- data.frame(sea_ice_data,
 data_model <- CR_data %>%
   left_join(x = CR_data,
             y = sea_ice_data,
-            by = "year") %>%
-  filter(year != 1992)  %>% # Remove the captures from 1992 since I can't calculate the ice free days in 1991
-  filter(year != 1993) # Same 
+            by = "year")
 
 
 # build dataset
@@ -78,12 +76,16 @@ source("05_script/models/functions_for_models_Nimble.R")
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-model_code <- "null_model"
-mode <- ""
+{model_code <- "0.0.0.0"
 
 dat <- list(y = as.numeric(y))
 params <- c("a0", "b0", "sigma1", "eps1") 
 
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear) 
+}
 
 temp.dat <- data.frame(y = y)
 temp.dat$yfac <- as.factor(temp.dat$y)   # Ajout de Y en facteur
@@ -99,8 +101,8 @@ inits_null <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, mode),
-       value = nimbleMCMC(code = get(paste0(model_code, mode)),     # model code  
+assign(x = paste0("fit_", model_code),
+       value = nimbleMCMC(code = get(paste0("model_", model_code)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits_null,          
@@ -113,9 +115,9 @@ assign(x = paste0("fit_", model_code, mode),
 end <- Sys.time()
 end - start
 
-get(paste0("fit_", model_code, mode))$WAIC
-# 1083.937
-
+# Get and save wAIC
+wAIC_table <- save_wAIC_null_model(model_code)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/", 
@@ -184,11 +186,11 @@ save_plot(filename = paste0("07_results/01_interim_results/model_outputs/graph/d
 
 # B. Ice-free days t-1 =========================================================
 
-# ~ 1. Effect only on 1cub VS 0cubs (1.1.2_E_1c_VS_0c) -------------------------
+# ~ 1. Effect only on 1cub VS 0cubs (1.1.2_D_1c_VS_0c) -------------------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.1.2_E"
+{model_code <- "1.1.2_D"
 effect <- "1c_VS_0c"
 
 # Predictor
@@ -240,8 +242,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1085.991
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -288,9 +291,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -300,12 +303,12 @@ rm(model_code, effect, dat, params, coefs, inits,
 
 
 
-# ~ 2. Effect only on 2-3cub VS 0cubs (1.1.2_E_2-3c_VS_0c) ---------------------
+# ~ 2. Effect only on 2-3cub VS 0cubs (1.1.2_D_2-3c_VS_0c) ---------------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
 
-{model_code <- "1.1.2_E"
+{model_code <- "1.1.2_D"
 effect <- "2_3c_VS_0c"
 
 # Predictor
@@ -359,8 +362,9 @@ end <- Sys.time()
 end - start
 
 
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1083.658
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -405,9 +409,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -417,11 +421,11 @@ rm(model_code, effect, dat, params, coefs, inits,
 
 
 
-# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.1.2_E_common) --------------
+# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.1.2_D_common) --------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.1.2_E"
+{model_code <- "1.1.2_D"
 effect <- "common"
 
 # Predictor
@@ -475,10 +479,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1080.703
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -523,9 +526,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -538,11 +541,11 @@ rm(model_code, effect, dat, params, coefs, inits,
 
 
 
-# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.1.2_E_distinct) --------------
+# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.1.2_D_distinct) --------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.1.2_E"
+{model_code <- "1.1.2_D"
 effect <- "distinct"
 
 # Predictor
@@ -597,10 +600,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1082.624
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -646,9 +648,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -661,11 +663,11 @@ rm(model_code, effect, dat, params, coefs, inits,
 
 # C. Ice-free days t-2 =========================================================
 
-# ~ 1. Effect only on 1cub VS 0cubs (1.1.3_E_1c_VS_0c) -------------------------
+# ~ 1. Effect only on 1cub VS 0cubs (1.1.3_D_1c_VS_0c) -------------------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.1.3_E"
+{model_code <- "1.1.3_D"
 effect <- "1c_VS_0c"
 
 # Predictor
@@ -717,10 +719,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1085.51
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -766,9 +767,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -779,12 +780,12 @@ rm(model_code, effect, dat, params, coefs, inits,
 
 
 
-# ~ 2. Effect only on 2-3cub VS 0cubs (1.1.3_E_2-3c_VS_0c) ---------------------
+# ~ 2. Effect only on 2-3cub VS 0cubs (1.1.3_D_2-3c_VS_0c) ---------------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
 
-{model_code <- "1.1.3_E"
+{model_code <- "1.1.3_D"
 effect <- "2_3c_VS_0c"
 
 # Predictor
@@ -837,10 +838,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1084.646
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -887,9 +887,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -898,11 +898,11 @@ rm(model_code, effect, dat, params, coefs, inits,
 
 
 
-# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.1.3_E_common) --------------
+# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.1.3_D_common) --------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.1.3_E"
+{model_code <- "1.1.3_D"
 effect <- "common"
 
 # Predictor
@@ -955,10 +955,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1083.797
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1005,9 +1004,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
@@ -1020,11 +1019,11 @@ rm(model_code, effect, dat, params, coefs, inits,
 
 
 
-# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.1.3_E_distinct) ----------
+# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.1.3_D_distinct) ----------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.1.3_E"
+{model_code <- "1.1.3_D"
 effect <- "distinct"
 
 # Predictor
@@ -1079,10 +1078,9 @@ end <- Sys.time()
 end - start
 
 
-
-
-get(paste0("fit_", model_code, "_effect_", effect, mode))$WAIC
-# 1085.799
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
@@ -1128,9 +1126,9 @@ ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_i
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
-rm(model_code, effect, dat, params, coefs, inits, 
+rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
+                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
