@@ -712,7 +712,7 @@ SI_retreat_advance_date_C %>%
        y = "Day of the year",
        color = "")
 
-ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_600m_barents_sea.png",
+ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_C_depth_600m_barents_sea.png",
        width = 6, height = 4)
 
 
@@ -956,7 +956,7 @@ SI_retreat_advance_date_D %>%
        y = "Day of the year",
        color = "")
 
-ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_depth_600m_100km_buffer.png",
+ggsave("06_processed_data/sea_ice_data/graphs/retreat_advance_day_D_depth_600m_100km_buffer.png",
        width = 6, height = 4)
 
 
