@@ -7,10 +7,8 @@
 library(tidyverse)
 library(mlogit)
 library(viridis)
-library(ggmcmc)
 library(gridExtra)
 library(nimble)
-library(MCMCvis)
 library(cowplot)
 Sys.setenv(LANG = "en")
 
@@ -24,7 +22,8 @@ AO_data <- read_csv("06_processed_data/AO_data/AO_data_winter_spring_1990-2019.c
 data_model <- CR_data %>%
   left_join(x = CR_data,
             y = AO_data,
-            by = "year")
+            by = "year") %>%
+  filter(year >= 2000)
 
 
 # build dataset
@@ -87,9 +86,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_s"
 var_full_name <- "Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -101,10 +100,10 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -115,8 +114,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -134,9 +133,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -147,19 +146,19 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -174,12 +173,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -204,9 +203,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_s"
 var_full_name <- "Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -217,11 +216,11 @@ names(my.constants)[5] <- var_short_name
 }
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -232,8 +231,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -251,9 +250,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -264,18 +263,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -290,12 +289,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -319,9 +318,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_s"
 var_full_name <- "Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -332,11 +331,11 @@ names(my.constants)[5] <- var_short_name
 }
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -347,8 +346,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -367,9 +366,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -380,18 +379,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -406,12 +405,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -438,9 +437,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_s"
 var_full_name <- "Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -451,11 +450,11 @@ names(my.constants)[5] <- var_short_name
 }
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -467,8 +466,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -486,9 +485,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -500,18 +499,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -526,12 +525,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -552,9 +551,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_pos"
 var_full_name <- "Phase of the Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -565,10 +564,10 @@ names(my.constants)[5] <- var_short_name
 }
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -578,8 +577,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -598,9 +597,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -611,12 +610,12 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
@@ -624,7 +623,7 @@ color_labels <- temp[[2]]
 rm(temp)
 
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -638,12 +637,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -667,9 +666,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_pos"
 var_full_name <- "Phase of the Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -683,11 +682,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -698,8 +697,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -720,9 +719,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -733,19 +732,19 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -759,12 +758,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -788,9 +787,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_pos"
 var_full_name <- "Phase of the Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -804,11 +803,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -819,8 +818,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -839,9 +838,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -851,19 +850,19 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -877,12 +876,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -905,9 +904,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_pos"
 var_full_name <- "Phase of the Winter AO"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -921,11 +920,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -937,8 +936,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -956,32 +955,32 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -995,12 +994,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1024,9 +1023,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_s"
 var_full_name <- "Winter AO in previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1040,10 +1039,10 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1054,8 +1053,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1074,9 +1073,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -1087,19 +1086,19 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -1114,12 +1113,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1144,9 +1143,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_s"
 var_full_name <- "Winter AO in previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1160,11 +1159,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1175,8 +1174,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1195,9 +1194,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -1208,18 +1207,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -1234,12 +1233,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect,
+                   paste0("fit_", model_code, "_effect_", effect, "_for_plot"))))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1263,9 +1262,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_s"
 var_full_name <- "Winter AO in previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1279,11 +1278,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1294,8 +1293,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1314,9 +1313,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -1327,18 +1326,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -1353,12 +1352,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect,
+                   paste0("fit_", model_code, "_effect_", effect, "_for_plot"))))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1385,9 +1384,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_s"
 var_full_name <- "Winter AO in previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1401,11 +1400,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1417,8 +1416,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1437,9 +1436,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -1451,18 +1450,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -1477,12 +1476,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+                   paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1504,9 +1503,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_pos"
 var_full_name <- "Phase of the Winter AO during previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1520,10 +1519,10 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1534,8 +1533,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1553,9 +1552,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -1566,12 +1565,12 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
@@ -1579,7 +1578,7 @@ color_labels <- temp[[2]]
 rm(temp)
 
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -1593,12 +1592,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1622,9 +1621,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_pos"
 var_full_name <- "Phase of the Winter AO during previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1638,11 +1637,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1653,8 +1652,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1673,9 +1672,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -1687,19 +1686,19 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -1713,12 +1712,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1742,9 +1741,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_pos"
 var_full_name <- "Phase of the Winter AO during previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1758,11 +1757,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1773,8 +1772,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1793,9 +1792,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -1806,12 +1805,12 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
@@ -1819,7 +1818,7 @@ color_labels <- temp[[2]]
 rm(temp)
 
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -1833,12 +1832,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1865,9 +1864,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_prior_pos"
 var_full_name <- "Phase of the Winter AO during previous year"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -1881,11 +1880,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -1897,8 +1896,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -1916,9 +1915,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -1930,12 +1929,12 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
@@ -1943,7 +1942,7 @@ color_labels <- temp[[2]]
 rm(temp)
 
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -1957,12 +1956,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -1986,9 +1985,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_s"
 var_full_name <- "Winter AO two years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2002,10 +2001,10 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2016,8 +2015,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2035,9 +2034,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -2048,18 +2047,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -2074,12 +2073,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -2105,9 +2104,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_s"
 var_full_name <- "Winter AO two years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2121,10 +2120,10 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2135,8 +2134,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2155,9 +2154,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -2168,18 +2167,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -2194,12 +2193,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect,
+                   paste0("fit_", model_code, "_effect_", effect, "_for_plot"))))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -2222,9 +2221,6 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_s"
 var_full_name <- "Winter AO two years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2238,10 +2234,10 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2252,8 +2248,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2272,9 +2268,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -2285,18 +2281,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -2311,12 +2307,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect,
+                   paste0("fit_", model_code, "_effect_", effect, "_for_plot"))))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -2343,9 +2339,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_s"
 var_full_name <- "Winter AO two years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2359,11 +2355,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2375,8 +2371,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2395,9 +2391,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -2408,18 +2404,18 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
-temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -2434,12 +2430,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode,
-                   paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"))))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+                   paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -2463,9 +2459,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_pos"
 var_full_name <- "Phase of the Winter AO 2 years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2479,10 +2475,10 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2493,8 +2489,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2514,9 +2510,9 @@ wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -2526,12 +2522,12 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
@@ -2539,7 +2535,7 @@ color_labels <- temp[[2]]
 rm(temp)
 
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -2553,12 +2549,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -2582,9 +2578,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_pos"
 var_full_name <- "Phase of the Winter AO 2 years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2598,11 +2594,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2613,8 +2609,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2633,9 +2629,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -2647,19 +2643,19 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -2673,12 +2669,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -2702,9 +2698,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_pos"
 var_full_name <- "Phase of the Winter AO 2 years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2718,11 +2714,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2733,8 +2729,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2753,9 +2749,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 # ~~~ b. Check convergence -----------------------------------------------------
@@ -2766,12 +2762,12 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
@@ -2779,7 +2775,7 @@ color_labels <- temp[[2]]
 rm(temp)
 
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -2793,12 +2789,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
@@ -2825,9 +2821,9 @@ var_scaled <- (var - mean(var))/sd(var)
 var_short_name <- "w_AO_2y_prior_pos"
 var_full_name <- "Phase of the Winter AO 2 years before"
 
-# Are females without cubs taken into account ?
-mode <- ""       # Yes
-# mode <- "_bis"  # No
+
+
+
 
 my.constants <- list(N = length(y), # nb of females captured
                      J = length(levels(y)),
@@ -2841,11 +2837,11 @@ names(my.constants)[5] <- var_short_name
 
 
 # Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect, mode)$params
+params <- get_coefs_and_params(y, var_scaled, effect)$params
 # params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect, mode)$coefs
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
 
 inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
                          b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
@@ -2857,8 +2853,8 @@ inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10,
 
 # Run the model
 start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect, mode)),     # model code  
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          
@@ -2876,9 +2872,9 @@ end - start
 wAIC_table <- save_wAIC(model_code, var_short_name, effect)
 write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
 
-save(list = paste0("fit_", model_code, "_effect_", effect, mode), 
+save(list = paste0("fit_", model_code, "_effect_", effect), 
      file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
 
@@ -2890,12 +2886,12 @@ check_convergence(params = params,
 
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, toupper(mode), ".RData"))
+                   model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities_factor(model_code, effect, mode, var_scaled, var)
+temp <- get_probabilities_factor(model_code, effect, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
@@ -2903,7 +2899,7 @@ color_labels <- temp[[2]]
 rm(temp)
 
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
        aes(x = as.factor(var), y = probability, fill = nbr_cub)) +
   geom_violin() +
   theme_bw() +
@@ -2917,12 +2913,12 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plo
   facet_wrap( ~ nbr_cub)
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, mode, ".png"),
+                         model_code,  "_effect_", effect, ".png"),
        width = 6, height = 3)
 
 
-rm(list = c(paste0("fit_", model_code, "_effect_", effect, mode),
-            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
 rm(model_code, effect,  params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
