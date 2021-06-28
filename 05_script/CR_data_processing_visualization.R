@@ -312,9 +312,13 @@ ggsave("07_results/01_interim_results/polar_bear_data_exploration/03-04 litter s
 
 
 
+# Distribution of captures of females with/without cubs ~~~~~~~~~~~~~~~~~~~~~~~~
 
+capture_data_females <- read.csv("06_processed_data/CR_data/CR_f_clean.csv") %>%
+  filter(year >= 2000)
 
-
+ggplot(capture_data_females, aes(x = day_number, fill = cub_status)) +
+  geom_density(alpha = 0.5)
 
 
 
