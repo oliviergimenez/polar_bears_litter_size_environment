@@ -375,3 +375,28 @@ get_SI_retreat_advance_date_any_threshold <- function(daily_sea_ice, years, days
 }
 
 
+
+
+get_summed_cells_sea_ice_15 <- function(daily_sea_ice_15, years, start, end) { # This function cannot be used with february as the month of end
+  summed_cells_sea_ice_15 <- c()
+  year <- c()
+  for (i in 1:length(years)) {
+    daily_sea_ice_15_year_i <- daily_sea_ice_15[[i]]
+    
+    day_nbr_start <- yday(as.Date(paste0(years[i], "-", start, "-01")))
+    if (end %in% c("01", "03", "05", "07", "08",  "10", "12")) {
+      day_nbr_end <- yday(as.Date(paste0(years[i], "-", end, "-31")))
+    } else {
+      day_nbr_end <- yday(as.Date(paste0(years[i], "-", end, "-30")))
+    }
+    
+    summed_cells_sea_ice_15 <- c(summed_cells_sea_ice_15,
+                                 sum(daily_sea_ice_15_year_i[day_nbr_start:day_nbr_end]))
+    year <- c(year, years[i])
+  }
+  summed_cells_sea_ice_15_df <- data.frame(year = year,
+                                           summed_sea_ice = summed_cells_sea_ice_15)
+}
+
+
+

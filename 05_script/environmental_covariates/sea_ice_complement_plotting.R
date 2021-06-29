@@ -1572,9 +1572,10 @@ ggsave("06_processed_data/sea_ice_data/graphs/median_daily_sea_ice_D_600m_depth_
 # + 3. Plot the 2-day variation in SI concentration to spot mistakes -----------
 
 load("06_processed_data/sea_ice_data/daily_sea_ice_depth_600m_100km_buffer_interpolated.RData")
-years <- seq(from = 1991, to = 2020, by = 1)
-daily_sea_ice <- daily_sea_ice_C_2 
+load("06_processed_data/sea_ice_data/daily_sea_ice_prop_cells_15_depth_600m_100km_buffer.RData")
 
+years <- seq(from = 1990, to = 2020, by = 1)
+daily_sea_ice <- daily_sea_ice_15_D
 
 delta <- c()
 year <- c()
@@ -1601,11 +1602,12 @@ ggplot(df_delta, aes(x = day_nbr, y = delta)) +
   geom_line() +
   facet_wrap(~year) +
   theme_bw() +
+  scale_y_continuous(breaks = c(-80, -60, -40, -20, 0, 20, 40, 60, 80)) +
   labs(x = "Day",
        y = "2-day difference in sea ice concentration")
 
-ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_D.png",
-       width = 10, height = 7.5)
+ggsave("06_processed_data/sea_ice_data/graphs/facetted_daily_differences_D_15.png",
+       width = 10, height = 10) # 7.5)
 
 
 
