@@ -1,19 +1,19 @@
 #==============================================================================#
 #                                                                              #
-#                    Nimble models for sea ice retreat day                     #
+#                        Nimble models for ice-free days                       #
 #                                                                              #
 #==============================================================================#
 
 
-# A. Day retreat t-1 ==========================================================
-# ~ 1. Day retreats t-1: effect 1c_VS_0c (1.2.2_D) ==============================
+# A. March-May ice t-1 ==========================================================
+# ~ 1. March-May ice t-1: effect 1c_VS_0c (1.4.2_D) ============================
 
-model_1.2.2_D_effect_1c_VS_0c <- nimbleCode({
+model_1.4.2_D_effect_1c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*day_retreat_previous_s[i] + eps1[year[i]]
+    log(q[i, 2]) <- a0 + a1*mar_may_ice_previous_s[i] + eps1[year[i]]
     log(q[i, 3]) <- b0 + eps1[year[i]]
     
     
@@ -33,15 +33,15 @@ model_1.2.2_D_effect_1c_VS_0c <- nimbleCode({
 })
 
 
-# ~ 2. Day retreats t-1: effect 2-3c_VS_0c (1.2.2_D) =============================
+# ~ 2. March-May ice t-1: effect 2-3c_VS_0c (1.4.2_D) =============================
 
-model_1.2.2_D_effect_2_3c_VS_0c <- nimbleCode({
+model_1.4.2_D_effect_2_3c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
     log(q[i, 2]) <- a0 + eps1[year[i]]
-    log(q[i, 3]) <- b0 + b1*day_retreat_previous_s[i] + eps1[year[i]]
+    log(q[i, 3]) <- b0 + b1*mar_may_ice_previous_s[i] + eps1[year[i]]
     
     
     for (j in 1:J) {
@@ -53,21 +53,21 @@ model_1.2.2_D_effect_2_3c_VS_0c <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0, 10)
+  sigma1 ~ dunif(0.00000E+00, 10)
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
   b1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 3. Day retreats t-1: effect common (1.2.2_D) =============================
+# ~ 3. March-May ice t-1: effect common (1.4.2_D) =============================
 
-model_1.2.2_D_effect_common <- nimbleCode({
+model_1.4.2_D_effect_common <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*day_retreat_previous_s[i] + eps1[year[i]]
-    log(q[i, 3]) <- b0 + a1*day_retreat_previous_s[i] + eps1[year[i]]
+    log(q[i, 2]) <- a0 + a1*mar_may_ice_previous_s[i] + eps1[year[i]]
+    log(q[i, 3]) <- b0 + a1*mar_may_ice_previous_s[i] + eps1[year[i]]
     
     
     for (j in 1:J) {
@@ -79,21 +79,21 @@ model_1.2.2_D_effect_common <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0, 10)
+  sigma1 ~ dunif(0.00000E+00, 10)
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 4. Day retreats t-1: effect distinct (1.2.2_D) =============================
+# ~ 4. March-May ice t-1: effect distinct (1.4.2_D) =============================
 
-model_1.2.2_D_effect_distinct <- nimbleCode({
+model_1.4.2_D_effect_distinct <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*day_retreat_previous_s[i] + eps1[year[i]]
-    log(q[i, 3]) <- b0 + b1*day_retreat_previous_s[i] + eps1[year[i]]
+    log(q[i, 2]) <- a0 + a1*mar_may_ice_previous_s[i] + eps1[year[i]]
+    log(q[i, 3]) <- b0 + b1*mar_may_ice_previous_s[i] + eps1[year[i]]
     
     
     for (j in 1:J) {
@@ -105,7 +105,7 @@ model_1.2.2_D_effect_distinct <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0, 10)
+  sigma1 ~ dunif(0.00000E+00, 10)
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
@@ -114,15 +114,38 @@ model_1.2.2_D_effect_distinct <- nimbleCode({
 })
 
 
-# B. Day retreat t-2 ==========================================================
-# ~ 1. Day retreats t-2: effect 1c_VS_0c (1.2.3_D) ==============================
 
-model_1.2.3_D_effect_1c_VS_0c <- nimbleCode({
+
+
+
+# ~ 5. March-May ice t-1: binomial =============================================
+
+model_1.4.2_D_binomial <- nimbleCode({
+  for(i in 1:N) {
+    y[i] ~ dbin(p[i], n[i])
+    logit(p[i]) <- b0 + b1 * mar_may_ice_previous_s[i] + eps1[year[i]]
+  }
+  for (i in 1:nbyear) {
+    eps1[i] ~ dnorm(0, sd = sigma1)
+  }
+  sigma1 ~ dunif(0.00000E+00, 10)
+  b0 ~ dnorm(0.00000E+00, sd = 1.5)
+  b1 ~ dnorm(0.00000E+00, sd = 1.5)
+})
+
+
+
+
+
+# B. March-May ice t-2 ==========================================================
+# ~ 1. March-May ice t-2: effect 1c_VS_0c (1.4.3_D) ==============================
+
+model_1.4.3_D_effect_1c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*day_retreat_2y_prior_s[i] + eps1[year[i]]
+    log(q[i, 2]) <- a0 + a1*mar_may_ice_2y_prior_s[i] + eps1[year[i]]
     log(q[i, 3]) <- b0 + eps1[year[i]]
     
     
@@ -135,22 +158,22 @@ model_1.2.3_D_effect_1c_VS_0c <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0, 10)
+  sigma1 ~ dunif(0.00000E+00, 10)
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
 
-# ~ 2. Day retreats t-2: effect 2-3c_VS_0c (1.2.3_D) =============================
+# ~ 2. March-May ice t-2: effect 2-3c_VS_0c (1.4.3_D) =============================
 
-model_1.2.3_D_effect_2_3c_VS_0c <- nimbleCode({
+model_1.4.3_D_effect_2_3c_VS_0c <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
     log(q[i, 2]) <- a0 + eps1[year[i]]
-    log(q[i, 3]) <- b0 + b1*day_retreat_2y_prior_s[i] + eps1[year[i]]
+    log(q[i, 3]) <- b0 + b1*mar_may_ice_2y_prior_s[i] + eps1[year[i]]
     
     
     for (j in 1:J) {
@@ -162,21 +185,21 @@ model_1.2.3_D_effect_2_3c_VS_0c <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0, 10)
+  sigma1 ~ dunif(0.00000E+00, 10)
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
   b1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 3. Day retreats t-2: effect common (1.2.3_D) =============================
+# ~ 3. March-May ice t-2: effect common (1.4.3_D) =============================
 
-model_1.2.3_D_effect_common <- nimbleCode({
+model_1.4.3_D_effect_common <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*day_retreat_2y_prior_s[i] + eps1[year[i]]
-    log(q[i, 3]) <- b0 + a1*day_retreat_2y_prior_s[i] + eps1[year[i]]
+    log(q[i, 2]) <- a0 + a1*mar_may_ice_2y_prior_s[i] + eps1[year[i]]
+    log(q[i, 3]) <- b0 + a1*mar_may_ice_2y_prior_s[i] + eps1[year[i]]
     
     
     for (j in 1:J) {
@@ -188,21 +211,21 @@ model_1.2.3_D_effect_common <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0, 10)
+  sigma1 ~ dunif(0.00000E+00, 10)
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 4. Day retreats t-2: effect distinct (1.2.3_D) =============================
+# ~ 4. March-May ice t-2: effect distinct (1.4.3_D) =============================
 
-model_1.2.3_D_effect_distinct <- nimbleCode({
+model_1.4.3_D_effect_distinct <- nimbleCode({
   
   for (i in 1:N) {
     y[i] ~ dcat(p[i, 1:J])
     log(q[i, 1]) <- 0
-    log(q[i, 2]) <- a0 + a1*day_retreat_2y_prior_s[i] + eps1[year[i]]
-    log(q[i, 3]) <- b0 + b1*day_retreat_2y_prior_s[i] + eps1[year[i]]
+    log(q[i, 2]) <- a0 + a1*mar_may_ice_2y_prior_s[i] + eps1[year[i]]
+    log(q[i, 3]) <- b0 + b1*mar_may_ice_2y_prior_s[i] + eps1[year[i]]
     
     
     for (j in 1:J) {
@@ -214,10 +237,13 @@ model_1.2.3_D_effect_distinct <- nimbleCode({
     eps1[i] ~ dnorm(0, sd = sigma1)
   }
   
-  sigma1 ~ dunif(0, 10)
+  sigma1 ~ dunif(0.00000E+00, 10)
   a0 ~ dnorm(0.00000E+00, sd = 1.5)
   b0 ~ dnorm(0.00000E+00, sd = 1.5)
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
   b1 ~ dnorm(0.00000E+00, sd = 1.5)
   
 })
+
+
+#

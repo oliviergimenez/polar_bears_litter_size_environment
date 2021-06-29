@@ -1,14 +1,12 @@
 #==============================================================================#
 #                                                                              #
-#                   Models with only sea ice retreat day                       #
+#                         Models with only ice-free days                       #
 #                                                                              #
 #==============================================================================#
 
 library(tidyverse)
-library(lubridate)
 library(mlogit)
 library(viridis)
-library(ggmcmc)
 library(gridExtra)
 library(nimble)
 library(cowplot)
@@ -19,11 +17,11 @@ Sys.setenv(LANG = "en")
 CR_data <- read_csv("06_processed_data/CR_data/CR_f_clean.csv")
 
 # Sea ice data
-sea_ice_data <- read_csv("06_processed_data/sea_ice_data/retreat_advance_ice_free_days_D.csv")
+sea_ice_data <- read_csv("06_processed_data/sea_ice_data/SI_metrics_D.csv")
 sea_ice_data <- data.frame(sea_ice_data,
-                           day_retreat_previous = c(NA, sea_ice_data$day_retreat[-nrow(sea_ice_data)]),
-                           day_retreat_2y_prior = c(NA, NA, sea_ice_data$day_retreat[-c(nrow(sea_ice_data),
-                                                                                        nrow(sea_ice_data) - 1)]))
+                           mar_may_ice_previous = c(NA, sea_ice_data$mar_may[-nrow(sea_ice_data)]),
+                           mar_may_ice_2y_prior = c(NA, NA, sea_ice_data$mar_may[-c(nrow(sea_ice_data),
+                                                                                    nrow(sea_ice_data) - 1)]))
 
 
 data_model <- CR_data %>%
@@ -65,8 +63,8 @@ summary(y)
 
 dat <- list(y = as.numeric(y))
 
-# Load the Nimble models + the ancillary functions
-source("05_script/models/1_sea_ice/1.2_Nimble_day_sea_ice_retreat.R")
+# Load the JAGS models + the ancillary functions
+source("05_script/models/1_sea_ice/1.4_Nimble_march_may_ice.R")
 source("05_script/models/functions_for_models_Nimble.R")
 
 
@@ -78,23 +76,22 @@ source("05_script/models/functions_for_models_Nimble.R")
 # see in 1.1_ice_free_days_w_Nimble.R
 
 
-# B. Sea ice retreat day  t-1 ==================================================
 
-# ~ 1. Effect only on 1cub VS 0cubs (1.2.2_D_1c_VS_0c) -------------------------
+
+# B. Ice-free days t-1 =========================================================
+
+# ~ 1. Effect only on 1cub VS 0cubs (1.4.2_D_1c_VS_0c) -------------------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.2.2_D"
+{model_code <- "1.4.2_D"
 effect <- "1c_VS_0c"
 
 # Predictor
-var <- data_model$day_retreat_previous
+var <- data_model$mar_may_ice_previous
 var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_previous_s"
-var_full_name <- "Day of sea ice retreat in previous year"
-
-
-
+var_short_name <- "mar_may_ice_previous_s"
+var_full_name <- "MarchMayIce in previous year"
 
 
 my.constants <- list(N = length(y), # nb of females captured
@@ -104,7 +101,6 @@ my.constants <- list(N = length(y), # nb of females captured
                      as.numeric(var_scaled)) 
 names(my.constants)[5] <- var_short_name
 }
-
 
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect)$params
@@ -128,7 +124,7 @@ assign(x = paste0("fit_", model_code, "_effect_", effect),
                           inits = inits,          
                           monitors = params,   # parameters to monitor
                           thin = 10,
-                          niter = 25000,                  # nb iterations
+                          niter = 20000,                  # nb iterations
                           nburnin = 5000,              # length of the burn-in
                           nchains = 2,
                           summary = TRUE,
@@ -158,16 +154,16 @@ load(file = paste0("07_results/01_interim_results/model_outputs/model_",
                    model_code, "_effect_", effect, ".RData"))
 
 
-temp <- get_probabilities(model_code, effect, var_scaled, var)
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -182,37 +178,35 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")),
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
+                         model_code,  "_effect_", effect, mode, ".png"),
        width = 6, height = 3)
 
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
 rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
-
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
 
 
-# ~ 2. Effect only on 2-3cub VS 0cubs (1.2.2_D_2-3c_VS_0c) ---------------------
+# ~ 2. Effect only on 2-3cub VS 0cubs (1.4.2_D_2-3c_VS_0c) ---------------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
 
-{model_code <- "1.2.2_D"
+{model_code <- "1.4.2_D"
 effect <- "2_3c_VS_0c"
 
 # Predictor
-var <- data_model$day_retreat_previous
+var <- data_model$mar_may_ice_previous
 var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_previous_s"
-var_full_name <- "Day of sea ice retreat in previous year"
-
+var_short_name <- "mar_may_ice_previous_s"
+var_full_name <- "MarchMayIce in previous year"
 
 
 
@@ -226,8 +220,10 @@ names(my.constants)[5] <- var_short_name
 }
 
 
+
 # Define the parameters to estimate
 params <- get_coefs_and_params(y, var_scaled, effect)$params
+# params <- c("a0", "b0", "b1", "sigma1", "eps1") 
 
 # Generate starting values
 coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
@@ -248,7 +244,7 @@ assign(x = paste0("fit_", model_code, "_effect_", effect),
                           inits = inits,          
                           monitors = params,   # parameters to monitor
                           thin = 10,
-                          niter = 25000,                  # nb iterations
+                          niter = 20000,                  # nb iterations
                           nburnin = 5000,              # length of the burn-in
                           nchains = 2,
                           summary = TRUE,
@@ -272,22 +268,20 @@ check_convergence(params = params,
                   effect = effect,
                   model_code = model_code)
 
-
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, ".RData"))
 
-
-temp <- get_probabilities(model_code, effect, var_scaled, var)
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -302,33 +296,37 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")),
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
+                         model_code,  "_effect_", effect, mode, ".png"),
        width = 6, height = 3)
 
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
 rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
 
 
-# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.2.2_D_common) --------------
+# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.4.2_D_common) --------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.2.2_D"
+{model_code <- "1.4.2_D"
 effect <- "common"
 
 # Predictor
-var <- data_model$day_retreat_previous
+var <- data_model$mar_may_ice_previous
 var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_previous_s"
-var_full_name <- "Day of sea ice retreat in previous year"
+var_short_name <- "mar_may_ice_previous_s"
+var_full_name <- "MarchMayIce in previous year"
+
+
+
 
 
 my.constants <- list(N = length(y), # nb of females captured
@@ -363,7 +361,7 @@ assign(x = paste0("fit_", model_code, "_effect_", effect),
                           inits = inits,          
                           monitors = params,   # parameters to monitor
                           thin = 10,
-                          niter = 25000,                  # nb iterations
+                          niter = 20000,                  # nb iterations
                           nburnin = 5000,              # length of the burn-in
                           nchains = 2,
                           summary = TRUE,
@@ -381,29 +379,26 @@ save(list = paste0("fit_", model_code, "_effect_", effect),
                    model_code, "_effect_", effect, ".RData"))
 
 
-
 # ~~~ b. Check convergence -----------------------------------------------------
 check_convergence(params = params,
                   effect = effect,
                   model_code = model_code)
 
 
-
 # ~~~ c. Plot the model --------------------------------------------------------
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, ".RData"))
 
-
-temp <- get_probabilities(model_code, effect, var_scaled, var)
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -418,15 +413,16 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")),
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
+                         model_code,  "_effect_", effect, mode, ".png"),
        width = 6, height = 3)
 
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
 rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
+
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -436,498 +432,18 @@ rm(model_code, effect, params, coefs, inits,
 
 
 
-# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.2.2_D_distinct) --------------
+# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.4.2_D_distinct) --------------
 
 # ~~~ a. Run the model ---------------------------------------------------------
 
-{model_code <- "1.2.2_D"
+{model_code <- "1.4.2_D"
 effect <- "distinct"
 
 # Predictor
-var <- data_model$day_retreat_previous
+var <- data_model$mar_may_ice_previous
 var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_previous_s"
-var_full_name <- "Day of sea ice retreat in previous year"
-
-
-
-
-
-my.constants <- list(N = length(y), # nb of females captured
-                     J = length(levels(y)),
-                     year = as.numeric(year),
-                     nbyear = nbyear,
-                     as.numeric(var_scaled)) 
-names(my.constants)[5] <- var_short_name
-}
-
-
-# Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect)$params
-
-# Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
-
-inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
-                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
-                         a1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
-                         b1 = coefs[4] + round(runif(n = 1, -1, 1))/10,
-                         sigma1 = runif(1))
-
-
-
-# Run the model
-start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
-                          data = dat,                                   
-                          constants = my.constants,        
-                          inits = inits,          
-                          monitors = params,   # parameters to monitor
-                          thin = 10,
-                          niter = 25000,                  # nb iterations
-                          nburnin = 5000,              # length of the burn-in
-                          nchains = 2,
-                          summary = TRUE,
-                          WAIC = TRUE))
-end <- Sys.time()
-end - start
-
-
-# Get and save wAIC
-wAIC_table <- save_wAIC(model_code, var_short_name, effect)
-write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
-
-save(list = paste0("fit_", model_code, "_effect_", effect), 
-     file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-# ~~~ b. Check convergence -----------------------------------------------------
-check_convergence(params = params,
-                  effect = effect,
-                  model_code = model_code)
-
-
-
-# ~~~ c. Plot the model --------------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-temp <- get_probabilities(model_code, effect, var_scaled, var)
-# Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
-       value = temp[[1]])
-
-# Get the legend labels
-color_labels <- temp[[2]]
-rm(temp)
-
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
-       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
-  geom_line() +
-  scale_color_viridis(discrete = TRUE,                       
-                      labels = color_labels) +
-  scale_linetype_manual(limits = c("mean", "credible_interval"),
-                        values = c("solid", "dotted"),
-                        labels = c("Mean", "CI")) +
-  theme_bw() +
-  labs(x = var_full_name,
-       y = "Probability", 
-       color = "",
-       linetype = "") 
-
-ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
-       width = 6, height = 3)
-
-
-rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
-rm(model_code, effect, params, coefs, inits, 
-   var, var_scaled, var_short_name, var_full_name,
-   color_labels)
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-
-
-
-
-# C. Day retreat t-2 =========================================================
-
-# ~ 1. Effect only on 1cub VS 0cubs (1.2.3_D_1c_VS_0c) -------------------------
-
-# ~~~ a. Run the model ---------------------------------------------------------
-
-{model_code <- "1.2.3_D"
-effect <- "1c_VS_0c"
-
-# Predictor
-var <- data_model$day_retreat_2y_prior
-var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_2y_prior_s"
-var_full_name <- "Day of sea ice retreat two years before"
-
-
-
-
-
-my.constants <- list(N = length(y), # nb of females captured
-                     J = length(levels(y)),
-                     year = as.numeric(year),
-                     nbyear = nbyear,
-                     as.numeric(var_scaled)) 
-names(my.constants)[5] <- var_short_name
-}
-
-
-# Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect)$params
-
-# Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
-
-inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
-                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
-                         a1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
-                         sigma1 = runif(1))
-
-
-
-# Run the model
-start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
-                          data = dat,                                   
-                          constants = my.constants,        
-                          inits = inits,          
-                          monitors = params,   # parameters to monitor
-                          thin = 10,
-                          niter = 20000,                  # nb iterations
-                          nburnin = 5000,              # length of the burn-in
-                          nchains = 2,
-                          summary = TRUE,
-                          WAIC = TRUE))
-end <- Sys.time()
-end - start
-
-
-# Get and save wAIC
-wAIC_table <- save_wAIC(model_code, var_short_name, effect)
-write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
-
-save(list = paste0("fit_", model_code, "_effect_", effect), 
-     file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-
-# ~~~ b. Check convergence -----------------------------------------------------
-check_convergence(params = params,
-                  effect = effect,
-                  model_code = model_code)
-
-
-# ~~~ c. Plot the model --------------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-temp <- get_probabilities(model_code, effect, var_scaled, var)
-# Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
-       value = temp[[1]])
-
-# Get the legend labels
-color_labels <- temp[[2]]
-rm(temp)
-
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
-       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
-  geom_line() +
-  scale_color_viridis(discrete = TRUE,                       
-                      labels = color_labels) +
-  scale_linetype_manual(limits = c("mean", "credible_interval"),
-                        values = c("solid", "dotted"),
-                        labels = c("Mean", "CI")) +
-  theme_bw() +
-  labs(x = var_full_name,
-       y = "Probability", 
-       color = "",
-       linetype = "") 
-
-ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
-       width = 6, height = 3)
-
-
-rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
-rm(model_code, effect, params, coefs, inits, 
-   var, var_scaled, var_short_name, var_full_name,
-   color_labels)
-
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-
-
-# ~ 2. Effect only on 2-3cub VS 0cubs (1.2.3_D_2-3c_VS_0c) ---------------------
-
-# ~~~ a. Run the model ---------------------------------------------------------
-
-{model_code <- "1.2.3_D"
-effect <- "2_3c_VS_0c"
-
-# Predictor
-var <- data_model$day_retreat_2y_prior
-var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_2y_prior_s"
-var_full_name <- "Day of sea ice retreat two years before"
-
-
-
-
-
-my.constants <- list(N = length(y), # nb of females captured
-                     J = length(levels(y)),
-                     year = as.numeric(year),
-                     nbyear = nbyear,
-                     as.numeric(var_scaled)) 
-names(my.constants)[5] <- var_short_name
-}
-
-
-# Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect)$params
-
-# Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
-
-inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
-                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
-                         b1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
-                         sigma1 = runif(1))
-
-
-
-# Run the model
-start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
-                          data = dat,                                   
-                          constants = my.constants,        
-                          inits = inits,          
-                          monitors = params,   # parameters to monitor
-                          thin = 10,
-                          niter = 20000,                  # nb iterations
-                          nburnin = 5000,              # length of the burn-in
-                          nchains = 2,
-                          summary = TRUE,
-                          WAIC = TRUE))
-end <- Sys.time()
-end - start
-
-# Get and save wAIC
-wAIC_table <- save_wAIC(model_code, var_short_name, effect)
-write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
-
-save(list = paste0("fit_", model_code, "_effect_", effect), 
-     file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-
-# ~~~ b. Check convergence -----------------------------------------------------
-check_convergence(params = params,
-                  effect = effect,
-                  model_code = model_code)
-
-
-
-# ~~~ c. Plot the model --------------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-temp <- get_probabilities(model_code, effect, var_scaled, var)
-# Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
-       value = temp[[1]])
-
-# Get the legend labels
-color_labels <- temp[[2]]
-rm(temp)
-
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
-       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
-  geom_line() +
-  scale_color_viridis(discrete = TRUE,                       
-                      labels = color_labels) +
-  scale_linetype_manual(limits = c("mean", "credible_interval"),
-                        values = c("solid", "dotted"),
-                        labels = c("Mean", "CI")) +
-  theme_bw() +
-  labs(x = var_full_name,
-       y = "Probability", 
-       color = "",
-       linetype = "") 
-
-ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
-       width = 6, height = 3)
-
-
-rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
-rm(model_code, effect, params, coefs, inits, 
-   var, var_scaled, var_short_name, var_full_name,
-   color_labels)
-
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-
-
-# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.2.3_D_common) --------------
-
-# ~~~ a. Run the model ---------------------------------------------------------
-
-{model_code <- "1.2.3_D"
-effect <- "common"
-
-# Predictor
-var <- data_model$day_retreat_2y_prior
-var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_2y_prior_s"
-var_full_name <- "Day of sea ice retreat two years before"
-
-
-
-
-
-my.constants <- list(N = length(y), # nb of females captured
-                     J = length(levels(y)),
-                     year = as.numeric(year),
-                     nbyear = nbyear,
-                     as.numeric(var_scaled)) 
-names(my.constants)[5] <- var_short_name
-}
-
-
-# Define the parameters to estimate
-params <- get_coefs_and_params(y, var_scaled, effect)$params
-
-# Generate starting values
-coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
-
-inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
-                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
-                         a1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
-                         sigma1 = runif(1))
-
-
-
-# Run the model
-start <- Sys.time()
-assign(x = paste0("fit_", model_code, "_effect_", effect),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
-                          data = dat,                                   
-                          constants = my.constants,        
-                          inits = inits,          
-                          monitors = params,   # parameters to monitor
-                          thin = 10,
-                          niter = 20000,                  # nb iterations
-                          nburnin = 5000,              # length of the burn-in
-                          nchains = 2,
-                          summary = TRUE,
-                          WAIC = TRUE))
-end <- Sys.time()
-end - start
-
-
-# Get and save wAIC
-wAIC_table <- save_wAIC(model_code, var_short_name, effect)
-write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
-
-save(list = paste0("fit_", model_code, "_effect_", effect), 
-     file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-
-# ~~~ b. Check convergence -----------------------------------------------------
-check_convergence(params = params,
-                  effect = effect,
-                  model_code = model_code)
-
-
-
-# ~~~ c. Plot the model --------------------------------------------------------
-load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
-                   model_code, "_effect_", effect, ".RData"))
-
-
-temp <- get_probabilities(model_code, effect, var_scaled, var)
-# Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
-       value = temp[[1]])
-
-# Get the legend labels
-color_labels <- temp[[2]]
-rm(temp)
-
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
-       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
-  geom_line() +
-  scale_color_viridis(discrete = TRUE,                       
-                      labels = color_labels) +
-  scale_linetype_manual(limits = c("mean", "credible_interval"),
-                        values = c("solid", "dotted"),
-                        labels = c("Mean", "CI")) +
-  theme_bw() +
-  labs(x = var_full_name,
-       y = "Probability", 
-       color = "",
-       linetype = "") 
-
-ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
-       width = 6, height = 3)
-
-
-rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
-rm(model_code, effect, params, coefs, inits, 
-   var, var_scaled, var_short_name, var_full_name,
-   color_labels)
-
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-
-
-
-
-
-# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.2.3_D_distinct) ----------
-
-# ~~~ a. Run the model ---------------------------------------------------------
-
-{model_code <- "1.2.3_D"
-effect <- "distinct"
-
-# Predictor
-var <- data_model$day_retreat_2y_prior
-var_scaled <- (var - mean(var))/sd(var) 
-var_short_name <- "day_retreat_2y_prior_s"
-var_full_name <- "Day of sea ice retreat two years before"
+var_short_name <- "mar_may_ice_previous_s"
+var_full_name <- "MarchMayIce in previous year"
 
 
 
@@ -995,17 +511,16 @@ check_convergence(params = params,
 load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
                    model_code, "_effect_", effect, ".RData"))
 
-
-temp <- get_probabilities(model_code, effect, var_scaled, var)
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
 # Get df for ggplot
-assign(x = paste0("fit_", model_code, "_effect_", effect, "_for_plot"),
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
        value = temp[[1]])
 
 # Get the legend labels
 color_labels <- temp[[2]]
 rm(temp)
 
-ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")), 
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
        aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
   geom_line() +
   scale_color_viridis(discrete = TRUE,                       
@@ -1020,15 +535,508 @@ ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, "_for_plot")),
        linetype = "") 
 
 ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
-                         model_code,  "_effect_", effect, ".png"),
+                         model_code,  "_effect_", effect, mode, ".png"),
        width = 6, height = 3)
 
 
 rm(list = c(paste0("fit_", model_code, "_effect_", effect),
-            paste0("fit_", model_code, "_effect_", effect, "_for_plot")))
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+
+
+
+
+
+
+# C. Ice-free days t-2 =========================================================
+
+# ~ 1. Effect only on 1cub VS 0cubs (1.4.3_D_1c_VS_0c) -------------------------
+
+# ~~~ a. Run the model ---------------------------------------------------------
+
+{model_code <- "1.4.3_D"
+effect <- "1c_VS_0c"
+
+# Predictor
+var <- data_model$mar_may_ice_2y_prior
+var_scaled <- (var - mean(var))/sd(var) 
+var_short_name <- "mar_may_ice_2y_prior_s"
+var_full_name <- "MarchMayIce two years before"
+
+
+
+
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
+
+# Define the parameters to estimate
+params <- get_coefs_and_params(y, var_scaled, effect)$params
+
+# Generate starting values
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
+
+inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
+                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
+                         a1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
+                         sigma1 = runif(1))
+
+
+
+# Run the model
+start <- Sys.time()
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
+                          data = dat,                                   
+                          constants = my.constants,        
+                          inits = inits,          
+                          monitors = params,   # parameters to monitor
+                          thin = 10,
+                          niter = 20000,                  # nb iterations
+                          nburnin = 5000,              # length of the burn-in
+                          nchains = 2,
+                          summary = TRUE,
+                          WAIC = TRUE))
+end <- Sys.time()
+end - start
+
+
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
+
+save(list = paste0("fit_", model_code, "_effect_", effect), 
+     file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+
+
+# ~~~ b. Check convergence -----------------------------------------------------
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
+
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+
+
+
+
+# ~ 2. Effect only on 2-3cub VS 0cubs (1.4.3_D_2-3c_VS_0c) ---------------------
+
+# ~~~ a. Run the model ---------------------------------------------------------
+
+
+{model_code <- "1.4.3_D"
+effect <- "2_3c_VS_0c"
+
+# Predictor
+var <- data_model$mar_may_ice_2y_prior
+var_scaled <- (var - mean(var))/sd(var) 
+var_short_name <- "mar_may_ice_2y_prior_s"
+var_full_name <- "MarchMayIce two years before"
+
+
+
+
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
+
+
+# Define the parameters to estimate
+params <- get_coefs_and_params(y, var_scaled, effect)$params
+
+# Generate starting values
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
+
+inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
+                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
+                         b1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
+                         sigma1 = runif(1))
+
+
+
+# Run the model
+start <- Sys.time()
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
+                          data = dat,                                   
+                          constants = my.constants,        
+                          inits = inits,          
+                          monitors = params,   # parameters to monitor
+                          thin = 10,
+                          niter = 20000,                  # nb iterations
+                          nburnin = 5000,              # length of the burn-in
+                          nchains = 2,
+                          summary = TRUE,
+                          WAIC = TRUE))
+end <- Sys.time()
+end - start
+
+
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
+
+save(list = paste0("fit_", model_code, "_effect_", effect), 
+     file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+
+
+# ~~~ b. Check convergence -----------------------------------------------------
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
+
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+
+
+
+
+# ~ 3. Common effect of 1c VS 0 and of 2-3c VS 0 (1.4.3_D_common) --------------
+
+# ~~~ a. Run the model ---------------------------------------------------------
+
+{model_code <- "1.4.3_D"
+effect <- "common"
+
+# Predictor
+var <- data_model$mar_may_ice_2y_prior
+var_scaled <- (var - mean(var))/sd(var) 
+var_short_name <- "mar_may_ice_2y_prior_s"
+var_full_name <- "MarchMayIce two years before"
+
+
+
+
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
+
+
+# Define the parameters to estimate
+params <- get_coefs_and_params(y, var_scaled, effect)$params
+
+# Generate starting values
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
+
+inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
+                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
+                         a1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
+                         sigma1 = runif(1))
+
+
+
+# Run the model
+start <- Sys.time()
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
+                          data = dat,                                   
+                          constants = my.constants,        
+                          inits = inits,          
+                          monitors = params,   # parameters to monitor
+                          thin = 10,
+                          niter = 20000,                  # nb iterations
+                          nburnin = 5000,              # length of the burn-in
+                          nchains = 2,
+                          summary = TRUE,
+                          WAIC = TRUE))
+end <- Sys.time()
+end - start
+
+
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
+
+save(list = paste0("fit_", model_code, "_effect_", effect), 
+     file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+
+
+# ~~~ b. Check convergence -----------------------------------------------------
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
+
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
 rm(model_code, effect, params, coefs, inits, 
    var, var_scaled, var_short_name, var_full_name,
    color_labels)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+
+
+
+
+
+
+
+# ~ 4. Distinct effect of 1c VS 0 and of 2-3c VS 0 (1.4.3_D_distinct) ----------
+
+# ~~~ a. Run the model ---------------------------------------------------------
+
+{model_code <- "1.4.3_D"
+effect <- "distinct"
+
+# Predictor
+var <- data_model$mar_may_ice_2y_prior
+var_scaled <- (var - mean(var))/sd(var) 
+var_short_name <- "mar_may_ice_2y_prior_s"
+var_full_name <- "MarchMayIce two years before"
+
+
+
+
+
+my.constants <- list(N = length(y), # nb of females captured
+                     J = length(levels(y)),
+                     year = as.numeric(year),
+                     nbyear = nbyear,
+                     as.numeric(var_scaled)) 
+names(my.constants)[5] <- var_short_name
+}
+
+
+# Define the parameters to estimate
+params <- get_coefs_and_params(y, var_scaled, effect)$params
+# params <- c("a0", "b0", "b1", "sigma1", "eps1") 
+
+# Generate starting values
+coefs <- get_coefs_and_params(y, var_scaled, effect)$coefs
+
+inits <- function() list(a0 = coefs[1] + round(runif(n = 1, -1, 1))/10, 
+                         b0 = coefs[2] + round(runif(n = 1, -1, 1))/10, 
+                         a1 = coefs[3] + round(runif(n = 1, -1, 1))/10,
+                         b1 = coefs[4] + round(runif(n = 1, -1, 1))/10,
+                         sigma1 = runif(1))
+
+
+
+# Run the model
+start <- Sys.time()
+assign(x = paste0("fit_", model_code, "_effect_", effect),
+       value = nimbleMCMC(code = get(paste0("model_", model_code, "_effect_", effect)),     # model code  
+                          data = dat,                                   
+                          constants = my.constants,        
+                          inits = inits,          
+                          monitors = params,   # parameters to monitor
+                          thin = 10,
+                          niter = 20000,                  # nb iterations
+                          nburnin = 5000,              # length of the burn-in
+                          nchains = 2,
+                          summary = TRUE,
+                          WAIC = TRUE))
+end <- Sys.time()
+end - start
+
+
+# Get and save wAIC
+wAIC_table <- save_wAIC(model_code, var_short_name, effect)
+write_csv(wAIC_table, "07_results/01_interim_results/model_outputs/wAIC_table.csv")
+
+save(list = paste0("fit_", model_code, "_effect_", effect), 
+     file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+
+
+# ~~~ b. Check convergence -----------------------------------------------------
+check_convergence(params = params,
+                  effect = effect,
+                  model_code = model_code)
+
+
+# ~~~ c. Plot the model --------------------------------------------------------
+load(file = paste0("07_results/01_interim_results/model_outputs/model_", 
+                   model_code, "_effect_", effect, ".RData"))
+
+temp <- get_probabilities(model_code, effect, mode, var_scaled, var)
+# Get df for ggplot
+assign(x = paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot"),
+       value = temp[[1]])
+
+# Get the legend labels
+color_labels <- temp[[2]]
+rm(temp)
+
+ggplot(data = get(paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")), 
+       aes(x = var, y = value, group = name, linetype = type, color = as.factor(cub_number))) +
+  geom_line() +
+  scale_color_viridis(discrete = TRUE,                       
+                      labels = color_labels) +
+  scale_linetype_manual(limits = c("mean", "credible_interval"),
+                        values = c("solid", "dotted"),
+                        labels = c("Mean", "CI")) +
+  theme_bw() +
+  labs(x = var_full_name,
+       y = "Probability", 
+       color = "",
+       linetype = "") 
+
+ggsave(filename = paste0("D:/polar_bears_litter_size_environment/07_results/01_interim_results/model_outputs/graph/model_", 
+                         model_code,  "_effect_", effect, mode, ".png"),
+       width = 6, height = 3)
+
+
+rm(list = c(paste0("fit_", model_code, "_effect_", effect),
+            paste0("fit_", model_code, "_effect_", effect, mode, "_for_plot")))
+rm(model_code, effect, params, coefs, inits, 
+   var, var_scaled, var_short_name, var_full_name,
+   color_labels)
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

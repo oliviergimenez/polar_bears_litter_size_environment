@@ -74,21 +74,27 @@ AO_NAO_T_SI_not_2y <- AO_NAO_T_SI %>%
                 -winter_AO_2y_ago, -spring_AO_2y_ago, 
                 -winter_NAO_2y_ago, -spring_NAO_2y_ago)
 
+AO_NAO_SI <- AO_NAO_T_SI %>%
+  dplyr::select(-T_spring, - T_winter)
+  
 colnames(AO_NAO_T_SI_not_2y)
 
 
 # ~ 2. Visualize correlations --------------------------------------------------
 
 # Correlations between climate oscillation indexes
-res <- cor(AO_NAO_T_SI_not_2y[,c(2:9)], method = "pearson", use = "complete.obs")
+png("07_results/01_interim_results/correlations/correlations_AO_NAO.png", width = 750, height = 600)
+
+res <- cor(AO_NAO_T_SI[,c(2:13)], method = "pearson", use = "complete.obs")
 res <- round(res, 2)
-corrplot(res, type = "lower")
+corrplot(res, method = "number", type = "lower")
+dev.off()
 
 
 # Correlations among climate oscillation indexes + temperature
 res <- cor(AO_NAO_T_SI_not_2y[,c(2:11)], method = "pearson", use = "complete.obs")
 res <- round(res, 2)
-corrplot(res, type = "lower")
+corrplot(res, method = "number", type = "lower")
 
 library("Hmisc")
 res2 <- rcorr(as.matrix(AO_NAO_T_SI_not_2y[,c(2:11)]))[[3]]
@@ -96,16 +102,27 @@ res2 <- res <- round(res2, 3)
 
 
 # Correlations among sea ice metrics
-res <- cor(AO_NAO_T_SI_not_2y[,c(12:17)], method = "pearson", use = "complete.obs")
-res <- round(res, 2)
-corrplot(res, type = "lower")
+png("07_results/01_interim_results/correlations/correlations_sea_ice.png", width = 500, height = 400)
 
+res <- cor(AO_NAO_T_SI[,c(16:24)], method = "pearson", use = "complete.obs")
+res <- round(res, 2)
+corrplot(res, method = "number", type = "lower")
+
+
+# Correlation between sea ice metrics + climate oscillations
+png("07_results/01_interim_results/correlations/correlations_all.png", width = 1000, height = 800)
+
+res <- cor(AO_NAO_SI[,-1], method = "pearson", use = "complete.obs")
+res <- round(res, 2)
+corrplot(res, method = "number", type = "lower")
+
+dev.off()
 
 # Correlation between sea ice metrics + climate oscillations + temperature
 
 res <- cor(AO_NAO_T_SI_not_2y[,-1], method = "pearson", use = "complete.obs")
 res <- round(res, 2)
-corrplot(res, type = "lower")
+corrplot(res, method = "number", type = "lower")
 
 
 ggplot(AO_NAO_T_SI, aes(x = winter_AO, y = day_retreat)) +
@@ -135,6 +152,9 @@ ggplot(AO_NAO_T_SI, aes(x = spring_AO, y = day_advance)) +
 
 ggplot(AO_NAO_T_SI, aes(x = spring_NAO, y = day_advance)) +
   geom_point()
+
+
+# ~ 3. Visualize correlations --------------------------------------------------
 
 
 
@@ -211,7 +231,7 @@ ggsave("07_results/01_interim_results/correlations/percentage_variance.png",
 library(climwin)
 
 # Temperature
-temperature.raw <- read_delim("04_raw_data/temperature/svalbard_temperature_daily_montly_1898-2018.csv", 
+temperature.raw <- read_delim("D:/polar_bears_litter_size_environment/04_raw_data/temperature/svalbard_temperature_daily_montly_1898-2018.csv", 
                               ";", escape_double = FALSE, col_types = cols(X6 = col_skip(), 
                                                                            X7 = col_skip()), trim_ws = TRUE)
 T.processed <- temperature.raw %>%
@@ -228,8 +248,9 @@ T.processed <- temperature.raw %>%
                 T_daily) %>%
   filter(year >= 1990)
 
+T_monthly <- T.processed %>%
 # Arctic Oscillation (AO)
-AO_raw <- read_table2("04_raw_data/arctic_oscillation/monthly_actic_oscillation_index.txt", 
+AO_raw <- read_table2("D:/polar_bears_litter_size_environment/04_raw_data/arctic_oscillation/monthly_actic_oscillation_index.txt", 
                       col_types = cols(`1950` = col_skip()))
 
 AO_processed <- AO_raw %>%

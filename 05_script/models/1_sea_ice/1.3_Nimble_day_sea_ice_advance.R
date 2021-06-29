@@ -85,7 +85,7 @@ model_1.3.2_D_effect_common <- nimbleCode({
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 3. Ice-free days t-1: effect distinct (1.3.2_D) =============================
+# ~ 4. Ice-free days t-1: effect distinct (1.3.2_D) =============================
 
 model_1.3.2_D_effect_distinct <- nimbleCode({
   
@@ -194,7 +194,7 @@ model_1.3.3_D_effect_common <- nimbleCode({
   a1 ~ dnorm(0.00000E+00, sd = 1.5)
 })
 
-# ~ 3. Ice-free days t-2: effect distinct (1.3.3_D) =============================
+# ~ 4. Ice-free days t-2: effect distinct (1.3.3_D) =============================
 
 model_1.3.3_D_effect_distinct <- nimbleCode({
   

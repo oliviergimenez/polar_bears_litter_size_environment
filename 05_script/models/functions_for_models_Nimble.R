@@ -58,32 +58,29 @@ get_coefs_and_params <- function(y, var_scaled, effect) {
   
   all_coefs <- as.vector(summary(mlogit.mod)$coefficients)
   
-  if (mode == "") {
-    
-    if (effect == "1c_VS_0c") {
-      coefs <- c(all_coefs[1:3])
-      params <- c("a0", "b0", "a1", "sigma1" ,"eps1")
-    }
-    if (effect == "2_3c_VS_0c") {
-      coefs <- c(all_coefs[c(1, 2, 4)])
-      params <- c("a0", "b0", "b1", "sigma1" ,"eps1")
-    }
-    if (effect == "common") { # Same as first possibility
-      coefs <- c(all_coefs[c(1:3, 3)])
-      params <- c("a0", "b0", "a1", "sigma1" ,"eps1")
-    }
-    if (effect == "distinct") {
-      coefs <- c(all_coefs[c(1:4)])
-      params <- c("a0", "b0", "a1", "b1", "sigma1" ,"eps1")
-    }
-    
-    
-  } else {
-    print("not done")
+  
+  if (effect == "1c_VS_0c") {
+    coefs <- c(all_coefs[1:3])
+    params <- c("a0", "b0", "a1", "sigma1" ,"eps1")
   }
-  return(list(coefs = coefs,
-              params = params))
+  if (effect == "2_3c_VS_0c") {
+    coefs <- c(all_coefs[c(1, 2, 4)])
+    params <- c("a0", "b0", "b1", "sigma1" ,"eps1")
+  }
+  if (effect == "common") { # Same as first possibility
+    coefs <- c(all_coefs[c(1:3, 3)])
+    params <- c("a0", "b0", "a1", "sigma1" ,"eps1")
+  }
+  if (effect == "distinct") {
+    coefs <- c(all_coefs[c(1:4)])
+    params <- c("a0", "b0", "a1", "b1", "sigma1" ,"eps1")
+  }
+  
+return(list(coefs = coefs,
+            params = params))
 }
+
+
 
 
 # Create the wAIC table 
@@ -399,7 +396,7 @@ check_convergence <- function(params, effect, model_code) {
   
   param.mean <- chains_l %>%
     group_by(parameter, chain) %>%
-    summarize(m = mean(value))
+    summarise(m = mean(value))
   
   param.running.mean <- chains_l %>%
     arrange(parameter, iteration) %>%
@@ -447,6 +444,14 @@ check_convergence <- function(params, effect, model_code) {
             base_width = 10,
             base_height = nrows * 3)
   return(diagnostic_plot)
+}
+
+
+get_mean_and_CI <- function(x, lower, upper) {
+  output <- data.frame(y = mean(x), 
+                       ymin = quantile(x, probs = lower),
+                       ymax = quantile(x, probs = upper))
+  return(output)
 }
 
 
@@ -704,5 +709,43 @@ get_probabilities_factor <- function(model_code, effect, mode, var_scaled, var) 
                             levels = c("no cubs", "1 cub", "2-3 cubs")))
   color_labels <- c("no cubs", "1 cub", "2-3 cubs")
   return(list(df.for.plot, color_labels))
+}
+
+
+
+
+get_probabilities_binomial <- function(model_code, effect, var_scaled, var) { 
+  res <- rbind(get(paste0("fit_", model_code, "_effect_", effect))$samples$chain1,
+               get(paste0("fit_", model_code, "_effect_", effect))$samples$chain2)
+  
+  # Create grid of x values
+  range <- range(var_scaled)
+  
+  lengthgrid <- 100
+  grid_scaled <- seq(from = range[1] - 0.1*(range[2] - range[1]), 
+                     to = range[2] + 0.1*(range[2] - range[1]), 
+                     length = lengthgrid)
+  
+  grid <- grid_scaled * sd(var) + mean(var)
+  
+  p2_3cub <- matrix(data = NA, 
+                    nrow = dim(res)[1], 
+                    ncol = lengthgrid)
+  
+  # Back transform
+  for (i in 1:lengthgrid) {
+    for (j in 1:dim(res)[1]) {
+      p2_3cub[j, i] <- plogis(res[j, 1] + res[j, 2] * grid_scaled[i])
+      # p2_3cub[j, i] <- exp(res[j, 1] + res[j, 2] * grid_scaled[i])/(1 + exp(res[j, 1] + res[j, 2] * grid_scaled[i]))
+    }
+  }
+  df.for.plot <- data.frame(var = grid,
+                            mean_p_2_3_cub = apply(p2_3cub, 2, mean),
+                            ci_p_2_3_cub_2.5 = apply(p2_3cub, 2, quantile, probs = 0.025),
+                            ci_p_2_3_cub_97.5 = apply(p2_3cub, 2, quantile, probs = 0.975)) %>%
+    pivot_longer(cols = c("mean_p_2_3_cub", "ci_p_2_3_cub_2.5", "ci_p_2_3_cub_97.5")) %>%
+    mutate(type = ifelse(name == "mean_p_2_3_cub", "mean", "credible_interval"))
+  
+  return(df.for.plot)
 }
 

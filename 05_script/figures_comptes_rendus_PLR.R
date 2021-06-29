@@ -202,7 +202,7 @@ day.nbr <- lubridate::yday(as.Date("2020-03-15"))
 
 
 
-load("04_raw_data/sea_ice/hamburg/1992/raster_stack/sea_ice_raster_stack_1992.RData")
+load("04_raw_data/sea_ice/1992/raster_stack/sea_ice_raster_stack_1992.RData")
 Sea_ice_stack_1992 <- sea_ice_raster_stack
 rm(sea_ice_raster_stack)
 
@@ -220,7 +220,7 @@ rects <- data.frame(xstart = 600,
                             yend = 0)
 
 ggplot() +
-  geom_raster(data = df_sea_ice_sep, aes(x = x, y = y, fill = X1992.01.01.165)) +
+  geom_raster(data = df_sea_ice_sep, aes(x = x, y = y, fill = sea_ice_1992_06_13)) +
   geom_rect(data = rects, aes(xmin = xstart, xmax = xend,
                               ymin = ystart, ymax = yend),
             color = "red", alpha = 0) +
