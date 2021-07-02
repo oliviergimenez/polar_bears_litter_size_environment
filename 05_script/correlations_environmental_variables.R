@@ -6,6 +6,7 @@
 
 library(tidyverse)
 library(lubridate)
+library(RColorBrewer)
 library(cowplot)
 library(corrplot)
 library(climwin)
@@ -32,7 +33,7 @@ T_data <- read_csv("06_processed_data/temperature_data/temperature_processed_mon
          T_winter = winter)
 
 # Sea ice
-sea_ice <- read_csv("06_processed_data/sea_ice_data/retreat_advance_ice_free_days_D.csv")
+sea_ice <- read_csv("06_processed_data/sea_ice_data/SI_metrics_D.csv")
 sea_ice <- data.frame(sea_ice,
                       ice_free_days_previous = c(NA, sea_ice$ice_free_days[-nrow(sea_ice)]),
                       ice_free_days_2y_ago = c(NA, NA, sea_ice$ice_free_days[-c(nrow(sea_ice), 
@@ -42,10 +43,18 @@ sea_ice <- data.frame(sea_ice,
                                                                             nrow(sea_ice) - 1)]),
                       day_advance_previous = c(NA, sea_ice$day_advance[-nrow(sea_ice)]),
                       day_advance_2y_ago = c(NA, NA, sea_ice$day_advance[-c(nrow(sea_ice), 
-                                                                            nrow(sea_ice) - 1)])) %>%
-  dplyr::select(year, day_retreat, day_retreat_previous, day_retreat_2y_ago,
-                day_advance, day_advance_previous, day_advance_2y_ago,
-                ice_free_days, ice_free_days_previous, ice_free_days_2y_ago)
+                                                                            nrow(sea_ice) - 1)]),
+                      mar_may_previous = c(NA, sea_ice$mar_may[-nrow(sea_ice)]),
+                      mar_may_2y_ago = c(NA, NA, sea_ice$mar_may[-c(nrow(sea_ice), 
+                                                                        nrow(sea_ice) - 1)]),
+                      jun_nov_previous = c(NA, sea_ice$jun_nov[-nrow(sea_ice)]),
+                      jun_nov_2y_ago = c(NA, NA, sea_ice$jun_nov[-c(nrow(sea_ice), 
+                                                                    nrow(sea_ice) - 1)])) %>%
+  dplyr::select(year, day_retreat, day_retreat_previous, day_retreat_2y_ago, # day_advance, 
+                day_advance_previous, day_advance_2y_ago, # ice_free_days, 
+                ice_free_days_previous, ice_free_days_2y_ago,
+                mar_may, mar_may_previous, mar_may_2y_ago, # jun_nov, 
+                jun_nov_previous, jun_nov_2y_ago)
 
 
 
@@ -102,11 +111,54 @@ res2 <- res <- round(res2, 3)
 
 
 # Correlations among sea ice metrics
-png("07_results/01_interim_results/correlations/correlations_sea_ice.png", width = 500, height = 400)
+res <- cor(sea_ice[-1], method = "pearson", use = "complete.obs")
 
-res <- cor(AO_NAO_T_SI[,c(16:24)], method = "pearson", use = "complete.obs")
-res <- round(res, 2)
-corrplot(res, method = "number", type = "lower")
+res.df <- as.data.frame(round(res, 2)) 
+res.df <- res.df %>%
+  mutate(row = rownames(res.df)) %>%
+  pivot_longer(cols = c(colnames(sea_ice[-1]))) %>%
+  rename(column = name) %>%
+  mutate(value2 = ifelse(abs(value) < 0.3, 0, value))
+
+order <- c("day_retreat", "day_retreat_previous", "day_retreat_2y_ago",
+           "day_advance_previous", "day_advance_2y_ago",
+           "ice_free_days_previous", "ice_free_days_2y_ago",
+           "mar_may", "mar_may_previous", "mar_may_2y_ago", 
+           "jun_nov_previous", "jun_nov_2y_ago")
+
+ggplot(res.df, aes(row, column)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = value)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme_bw() + 
+  scale_fill_gradient2(low = "#075AFF",
+                       mid = "#FFFFCC",
+                       high = "#FF0000") +
+  scale_x_discrete(limits = order) +
+  scale_y_discrete(limits = order) +
+  geom_text(aes(label = value), size = 2.5) +
+  labs(x = "",
+       y = "",
+       fill = "")
+ggsave(filename = "07_results/01_interim_results/correlations/sea_ice_metrics_ggplot.png",
+       height = 8, width = 10)
+
+ggplot(res.df, aes(row, column)) +                           # Create heatmap with ggplot2
+  geom_tile(aes(fill = value2)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme_bw() + 
+  scale_fill_gradient2(low = "#075AFF",
+                       mid = "#FFFFCC",
+                       high = "#FF0000") +
+  scale_x_discrete(limits = order) +
+  scale_y_discrete(limits = order) +
+  geom_text(aes(label = value), size = 2.5) +
+  labs(x = "",
+       y = "",
+       fill = "")
+
+ggsave(filename = "07_results/01_interim_results/correlations/sea_ice_metrics_ggplot_lower_0.3_filled_0.png",
+       height = 8, width = 10)
+
 
 
 # Correlation between sea ice metrics + climate oscillations

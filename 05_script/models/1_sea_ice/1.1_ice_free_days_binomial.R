@@ -6,9 +6,7 @@
 #==============================================================================#
 
 library(tidyverse)
-library(mlogit)
 library(viridis)
-library(ggmcmc)
 library(gridExtra)
 library(nimble)
 Sys.setenv(LANG = "en")
@@ -18,7 +16,7 @@ Sys.setenv(LANG = "en")
 CR_data <- read_csv("06_processed_data/CR_data/CR_f_with_cubs_clean.csv")
 
 # Sea ice data
-sea_ice_data <- read_csv("06_processed_data/sea_ice_data//SI_metrics_D.csv")
+sea_ice_data <- read_csv("06_processed_data/sea_ice_data/SI_metrics_D.csv")
 sea_ice_data <- data.frame(sea_ice_data,
                            ice_free_days_previous = c(NA, sea_ice_data$ice_free_days[-nrow(sea_ice_data)]),
                            ice_free_days_2y_prior = c(NA, NA, sea_ice_data$ice_free_days[-c(nrow(sea_ice_data),
@@ -27,9 +25,7 @@ sea_ice_data <- data.frame(sea_ice_data,
 data_model <- CR_data %>%
   left_join(x = CR_data,
             y = sea_ice_data,
-            by = "year") %>%
-  filter(year != 1992)  %>% # Remove the captures from 1992 since I can't calculate the ice free days in 1991
-  filter(year != 1993) # Same 
+            by = "year")
 
 
 # Response variable
@@ -235,7 +231,7 @@ inits <- function() list(b0 = mylogit$coefficients[1] + round(runif(n = 1, -1, 1
 # Run the model
 start <- Sys.time()
 assign(x = paste0("fit_", model_code, "_", effect),
-       value = nimbleMCMC(code = get(paste0("model_", model_code, "_", effect)),     # model code  
+       value = nimbleMCMC(code = get(paste0("model_", model_code, effect)),     # model code  
                           data = dat,                                   
                           constants = my.constants,        
                           inits = inits,          

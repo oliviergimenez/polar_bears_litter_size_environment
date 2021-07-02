@@ -16,7 +16,7 @@ Sys.setenv(LANG = "en")
 # CR data
 CR_data <- read_csv("06_processed_data/CR_data/CR_f_with_cubs_clean.csv")
 
-sea_ice_data <- read_csv("06_processed_data/sea_ice_data/retreat_advance_ice_free_days_D.csv")
+sea_ice_data <- read_csv("06_processed_data/sea_ice_data/SI_metrics_D.csv")
 sea_ice_data <- data.frame(sea_ice_data,
                            ice_free_days_previous = c(NA, sea_ice_data$ice_free_days[-nrow(sea_ice_data)]),
                            ice_free_days_2y_prior = c(NA, NA, sea_ice_data$ice_free_days[-c(nrow(sea_ice_data),

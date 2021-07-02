@@ -383,11 +383,11 @@ check_convergence <- function(params, effect, model_code) {
   
   # Process Nimble output into dataframe
   chain1 <- data.frame(nimble_output[["samples"]][["chain1"]]) %>%
-    dplyr::select(params[-length(params)]) %>%
+    dplyr::select(all_of(params[-length(params)])) %>%
     mutate(chain = "1",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain1"]])[1], by = 1))
   chain2 <- data.frame(nimble_output[["samples"]][["chain2"]]) %>%
-    dplyr::select(params[-length(params)]) %>%
+    dplyr::select(all_of(params[-length(params)])) %>%
     mutate(chain = "2",
            iteration = seq(1, dim(nimble_output[["samples"]][["chain2"]])[1], by = 1))
   chains <- rbind(chain1, chain2) 
