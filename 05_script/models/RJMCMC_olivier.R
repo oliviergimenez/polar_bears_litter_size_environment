@@ -22,6 +22,10 @@ y <- data_model %>%
 day <- as.numeric(data_model$day_number)
 day_s <- as.vector(scale(day))
 
+# Recode data to match dcat() function requirements
+y[y==1] <- 2
+y[y==0] <- 1
+y[y==4] <- 3
 
 # ~~~ a. Write the model -------------------------------------------------------
 
@@ -75,7 +79,7 @@ mnl.dat <- mlogit.data(temp.dat, varying = NULL,
 
 mlogit.mod <- mlogit(yfac ~ 1| day_s, 
                      data = mnl.dat, 
-                     reflevel = "0")
+                     reflevel = "1")
 summary(mlogit.mod)
 coefs <- as.vector(summary(mlogit.mod)$coefficients)
 
@@ -146,8 +150,7 @@ chains_l <- as.data.frame(allchains[, c(betaCols, max(betaCols) + 1)]) %>%
          chain = c(rep(1, times = dim(reversible_jump[["chain1"]])[1]),
                    rep(2, times = dim(reversible_jump[["chain2"]])[1]))) %>%
   mutate(chain = as.factor(chain)) %>% 
-  pivot_longer(cols = c("beta[1]", "beta[2]", "beta[3]", "beta[4]", "beta[5]", 
-                        "beta[6]", "beta[7]", "beta[8]", "psi"),
+  pivot_longer(cols = c("beta[1]", "beta[2]", "psi"),
                names_to = "parameter")
 
 chains_l <- as.data.frame(allchains) %>%
