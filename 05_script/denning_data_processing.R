@@ -4,10 +4,21 @@
 #                                                                              #
 #==============================================================================#
 
+# In the multinomial models, I'm considering females without cubs. But these females
+# without cubs can be many things: females who lost their cub(s) of the year, females
+# who lost their yearling(s), or their 2y old(s). They can also be females who 
+# parted form their 2y old that they successfully raised.
+
+# The lone females we want to consider are only the females who lost their cub(s)
+# of the year. To select only these females, we can use denning records (derived
+# from GPS and ear-tag data). 
+
+
+
+
 library(tidyverse)
 library(lubridate)
 Sys.setenv(LANG = "en")
-
 
 # Load the data
 denning_females_raw <- read_delim("04_raw_data/polar_bears/list_denning_females.csv", 

@@ -110,7 +110,7 @@ mlogit.mod <- mlogit(yfac ~ 1| ice_free_days_previous_s  +  prior_spring_AO_s,
                      data = mnl.dat, 
                      reflevel = "0")
 
-coefs <- as.vector(summary(mlogit.mod)$coefficients)
+ coefs <- as.vector(summary(mlogit.mod)$coefficients)
 
 
 inits <- function() list(b = coefs[c(1, 3, 5, 2)] + round(runif(n = 1, -1, 1))/10, 
